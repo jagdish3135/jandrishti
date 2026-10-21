@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Avatar } from '../components/bits';
 import { DEPARTMENTS, OFFICERS } from '../lib/catalog';
+import { useT } from '../lib/i18n';
 import { officerStats } from '../lib/scoring';
 import { useStore } from '../lib/store';
 import type { DeptId } from '../lib/types';
 
 export default function Officers() {
   const { db } = useStore();
+  const { t, deptShort, designation } = useT();
   const [dept, setDept] = useState<DeptId | 'all'>('all');
 
   const ranked = useMemo(
@@ -21,21 +23,18 @@ export default function Officers() {
   return (
     <div className="wrap">
       <div className="page-head">
-        <span className="kicker">Public record</span>
-        <h1>Officer performance</h1>
-        <p>
-          Every officer's score out of 100 comes from their actual work: fixing problems before the deadline (40%),
-          sending genuine proof photos (20%), ratings from citizens (25%) and not missing deadlines (15%).
-        </p>
+        <span className="kicker">{t('of.kicker')}</span>
+        <h1>{t('of.title')}</h1>
+        <p>{t('of.help')}</p>
       </div>
 
-      <div className="filters" role="group" aria-label="Department" style={{ marginBottom: 18 }}>
+      <div className="filters" role="group" aria-label={t('of.dept')} style={{ marginBottom: '1.1rem' }}>
         <button type="button" aria-pressed={dept === 'all'} onClick={() => setDept('all')}>
-          All
+          {t('of.all')}
         </button>
         {DEPARTMENTS.map((d) => (
           <button key={d.id} type="button" aria-pressed={dept === d.id} onClick={() => setDept(d.id)}>
-            {d.short}
+            {deptShort(d.id)}
           </button>
         ))}
       </div>
@@ -48,13 +47,14 @@ export default function Officers() {
             <span style={{ minWidth: 0 }}>
               <span className="ofc-name">{o.name}</span>
               <span className="ofc-sub" style={{ display: 'block' }}>
-                {o.designation}
+                {designation(o)}
               </span>
               <span className="ofc-sub" style={{ display: 'block' }}>
-                {s.resolved} fixed · {s.onTime} on time · {s.escalations} missed deadline{s.escalations === 1 ? '' : 's'} · {s.ratingAvg ? `★ ${s.ratingAvg.toFixed(1)}` : 'no ratings yet'}
+                {t('of.row', { fixed: s.resolved, onTime: s.onTime, missed: s.escalations })} ·{' '}
+                {s.ratingAvg ? t('of.rating', { r: s.ratingAvg.toFixed(1) }) : t('of.noRatings')}
               </span>
             </span>
-            <span className="ofc-score" aria-label={`Score ${s.score} of 100, grade ${s.grade}`}>
+            <span className="ofc-score" aria-label={t('of.scoreLabel', { s: s.score, g: s.grade })}>
               {s.score}
               <span className={`grade ${s.grade}`}>{s.grade}</span>
             </span>

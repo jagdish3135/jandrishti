@@ -93,6 +93,7 @@ if (ONLY.includes('shots')) {
     });
     await page.goto(`${BASE}/file`);
     await page.addStyleTag({ content: NO_GRAIN });
+    await page.locator('select').selectOption('roads');
     await page.getByRole('button', { name: /Pothole/ }).click();
     await scrollTo(page, '.map', 220);
     await wait(2500);
@@ -115,6 +116,31 @@ if (ONLY.includes('shots')) {
     await wait(3200);
     await page.locator('dialog .callout').scrollIntoViewIfNeeded();
     await shot(page, 'proof-rejected');
+    await ctx.close();
+  }
+
+  // Hindi home page, and a Marathi "Other" problem on the reporting page.
+  {
+    const ctx = await context('light');
+    await ctx.addInitScript(() => localStorage.setItem('jd:lang', 'hi'));
+    const page = await open(ctx, '/');
+    await wait(1500);
+    await shot(page, 'landing-hi');
+    await ctx.close();
+  }
+  {
+    const ctx = await context('light', { width: 1280, height: 900 });
+    await ctx.addInitScript(() => localStorage.setItem('jd:lang', 'mr'));
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/login?next=%2Ffile%3Fdept%3Dwater`);
+    await page.locator('.choice .btn').click();
+    await page.waitForURL('**/file**');
+    await page.addStyleTag({ content: NO_GRAIN });
+    await page.locator('.cat-other').click();
+    await page.locator('fieldset.types input').fill('पाण्याचे मीटर तुटले आहे');
+    await scrollTo(page, 'h1', 110);
+    await wait(800);
+    await shot(page, 'file-other-mr');
     await ctx.close();
   }
 

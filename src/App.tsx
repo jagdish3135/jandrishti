@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import Layout from './components/Layout';
+import { useT, type Key } from './lib/i18n';
 import { useStore } from './lib/store';
 import Landing from './pages/Landing';
 import NotFound from './pages/NotFound';
@@ -16,24 +17,26 @@ const Officers = lazy(() => import('./pages/Officers'));
 const PublicMap = lazy(() => import('./pages/PublicMap'));
 
 function Loading() {
+  const { t } = useT();
   return (
     <div className="wrap page-head" role="status">
-      <span className="kicker">Loading…</span>
-      <p className="muted">Please wait a moment.</p>
+      <span className="kicker">{t('common.loading')}</span>
+      <p className="muted">{t('common.wait')}</p>
     </div>
   );
 }
 
-const TITLES: [RegExp, string][] = [
-  [/^\/$/, 'JanDrishti · Report a civic problem and track it'],
-  [/^\/login.*$/, 'Sign in · JanDrishti'],
-  [/^\/file.*$/, 'Report a problem · JanDrishti'],
-  [/^\/my.*$/, 'My complaints · JanDrishti'],
-  [/^\/complaints\/(.+)$/, '$1 · JanDrishti'],
-  [/^\/desk.*$/, 'My work · JanDrishti'],
-  [/^\/officers\/?$/, 'Officer performance · JanDrishti'],
-  [/^\/officers\/.*$/, 'Officer profile · JanDrishti'],
-  [/^\/map.*$/, 'Complaint map · JanDrishti'],
+// Page titles: a translated name, or the complaint number.
+const TITLES: [RegExp, Key | null][] = [
+  [/^\/$/, null],
+  [/^\/login/, 'nav.signIn'],
+  [/^\/file/, 'nav.report'],
+  [/^\/my/, 'nav.my'],
+  [/^\/complaints\//, null],
+  [/^\/desk/, 'nav.work'],
+  [/^\/officers\/?$/, 'foot.perf'],
+  [/^\/officers\//, 'nav.officers'],
+  [/^\/map/, 'map.title'],
 ];
 
 function Guard({ role, children }: { role: 'citizen' | 'officer'; children: React.ReactElement }) {
@@ -45,15 +48,23 @@ function Guard({ role, children }: { role: 'citizen' | 'officer'; children: Reac
 
 export default function App() {
   const loc = useLocation();
+  const { t } = useT();
   useEffect(() => {
     const hit = TITLES.find(([re]) => re.test(loc.pathname));
-    document.title = hit ? loc.pathname.replace(hit[0], hit[1]) : 'Not found · JanDrishti';
-  }, [loc.pathname]);
+    const id = loc.pathname.match(/^\/complaints\/(.+)$/)?.[1];
+    document.title = !hit
+      ? `${t('nf.kicker')} · JanDrishti`
+      : id
+        ? `${decodeURIComponent(id)} · JanDrishti`
+        : hit[1]
+          ? `${t(hit[1])} · JanDrishti`
+          : `JanDrishti · ${t('brand.tagline')}`;
+  }, [loc.pathname, t]);
 
   return (
     <Layout>
       <Suspense fallback={<Loading />}>
-      <Routes>
+        <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/file" element={<Guard role="citizen"><FileComplaint /></Guard>} />

@@ -6,6 +6,9 @@ export const DEPARTMENTS: Department[] = [
   { id: 'drainage', name: 'Drainage & Sewerage', short: 'Drainage' },
   { id: 'electrical', name: 'Street Lighting', short: 'Lighting' },
   { id: 'sanitation', name: 'Solid Waste & Sanitation', short: 'Sanitation' },
+  { id: 'parks', name: 'Parks & Trees', short: 'Parks' },
+  { id: 'health', name: 'Public Health', short: 'Health' },
+  { id: 'encroachment', name: 'Encroachment & Hoardings', short: 'Encroachment' },
 ];
 
 export const CATEGORIES: Category[] = [
@@ -21,7 +24,29 @@ export const CATEGORIES: Category[] = [
   { id: 'wire', dept: 'electrical', name: 'Exposed electric wire', slaDays: 1, glyph: 'ϟ' },
   { id: 'garbage', dept: 'sanitation', name: 'Garbage not collected', slaDays: 2, glyph: '▣' },
   { id: 'dumping', dept: 'sanitation', name: 'Illegal dumping', slaDays: 3, glyph: '◆' },
+  // Departments added later; kept after the original 12 so the sample data stays the same.
+  { id: 'tree-fall', dept: 'parks', name: 'Fallen or dangerous tree', slaDays: 2, glyph: '♣' },
+  { id: 'park', dept: 'parks', name: 'Park or garden not maintained', slaDays: 7, glyph: '❀' },
+  { id: 'toilet', dept: 'health', name: 'Public toilet dirty or broken', slaDays: 2, glyph: '◧' },
+  { id: 'mosquito', dept: 'health', name: 'Mosquito breeding, stagnant water', slaDays: 3, glyph: '∴' },
+  { id: 'encroach', dept: 'encroachment', name: 'Footpath or road encroachment', slaDays: 7, glyph: '▥' },
+  { id: 'hoarding', dept: 'encroachment', name: 'Illegal hoarding or banner', slaDays: 5, glyph: '▭' },
+  ...(
+    [
+      ['roads', 7],
+      ['water', 3],
+      ['drainage', 3],
+      ['electrical', 5],
+      ['sanitation', 3],
+      ['parks', 7],
+      ['health', 3],
+      ['encroachment', 7],
+    ] as [DeptId, number][]
+  ).map(([dept, slaDays]) => ({ id: `${dept}-other`, dept, name: 'Other problem', slaDays, glyph: '…', other: true })),
 ];
+
+/** The original 12 types, used to build the sample data. */
+export const CORE_CATEGORIES = CATEGORIES.slice(0, 12);
 
 export const WARDS: Ward[] = [
   { id: 'kothrud', name: 'Kothrud', lat: 18.5074, lng: 73.8077, beat: 'west' },
@@ -40,6 +65,9 @@ const TITLES: Record<DeptId, [string, string, string]> = {
   drainage: ['Junior Engineer (Drainage)', 'Assistant Engineer (Drainage)', 'Executive Engineer (Drainage)'],
   electrical: ['Junior Engineer (Electrical)', 'Assistant Engineer (Electrical)', 'Executive Engineer (Electrical)'],
   sanitation: ['Sanitary Inspector', 'Chief Sanitary Inspector', 'Head, Solid Waste Dept.'],
+  parks: ['Garden Supervisor', 'Assistant Garden Superintendent', 'Garden Superintendent'],
+  health: ['Health Inspector', 'Senior Health Inspector', 'Medical Officer of Health'],
+  encroachment: ['Encroachment Inspector', 'Assistant Commissioner (Encroachment)', 'Deputy Commissioner (Encroachment)'],
 };
 
 // Fictional people. Any resemblance to real officers is coincidental.
@@ -49,6 +77,9 @@ const NAMES: Record<DeptId, [string, string, string, string]> = {
   drainage: ['Pooja Jadhav', 'Nikhil More', 'Farhan Shaikh', 'Lata Kale'],
   electrical: ['Sagar Chavan', 'Ritu Sawant', 'Prakash Naik', 'Deepa Mane'],
   sanitation: ['Ganesh Waghmare', 'Ayesha Inamdar', 'Mahesh Gaikwad', 'Shalini Rane'],
+  parks: ['Tushar Kamble', 'Neelam Dixit', 'Rajesh Salunke', 'Asha Thorat'],
+  health: ['Sameer Mulla', 'Priti Ghorpade', 'Vinay Apte', 'Manisha Karve'],
+  encroachment: ['Dattatray Pujari', 'Snehal Lokhande', 'Arvind Nikam', 'Rekha Bapat'],
 };
 
 const TOP: Officer = {

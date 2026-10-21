@@ -20,7 +20,16 @@ export const SCENE_FOR_CATEGORY: Record<string, SceneKind> = {
   wire: 'wire',
   garbage: 'garbage',
   dumping: 'garbage',
+  'tree-fall': 'debris',
+  park: 'garbage',
+  toilet: 'drain',
+  mosquito: 'drain',
+  encroach: 'footpath',
+  hoarding: 'debris',
 };
+
+/** Scene for any category, including "Other problem" ones. */
+export const sceneFor = (categoryId: string): SceneKind => SCENE_FOR_CATEGORY[categoryId] ?? 'debris';
 
 const SKIES = [
   ['#9ec9e8', '#e8f1f4'],

@@ -7,3 +7,5 @@ graphify-out/
 *.log
 .claude/
 dist-snapshot/
+
+.vercel

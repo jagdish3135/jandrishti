@@ -48,13 +48,26 @@ export function cleanAadhaar(input: string) {
   return input.replace(/[\s-]/g, '');
 }
 
+export type AadhaarProblem = 'len' | 'start' | 'sum';
+
 /** Format check only: 12 digits, cannot start with 0 or 1, valid Verhoeff check digit. */
-export function aadhaarError(input: string): string | null {
+export function aadhaarProblem(input: string): AadhaarProblem | null {
   const n = cleanAadhaar(input);
-  if (!/^\d{12}$/.test(n)) return 'Aadhaar has 12 digits.';
-  if (/^[01]/.test(n)) return 'Aadhaar numbers never start with 0 or 1.';
-  if (!verhoeffValid(n)) return 'This number fails the Aadhaar checksum. Check for a typo.';
+  if (!/^\d{12}$/.test(n)) return 'len';
+  if (/^[01]/.test(n)) return 'start';
+  if (!verhoeffValid(n)) return 'sum';
   return null;
+}
+
+const AADHAAR_MESSAGES: Record<AadhaarProblem, string> = {
+  len: 'Aadhaar has 12 digits.',
+  start: 'Aadhaar numbers never start with 0 or 1.',
+  sum: 'This number fails the Aadhaar checksum. Check for a typo.',
+};
+
+export function aadhaarError(input: string): string | null {
+  const p = aadhaarProblem(input);
+  return p ? AADHAAR_MESSAGES[p] : null;
 }
 
 /** A random number that passes the format check, for trying the demo. Not a real Aadhaar. */

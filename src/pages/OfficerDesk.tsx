@@ -1,19 +1,23 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Avatar, ComplaintCard, Empty } from '../components/bits';
+import { Icon } from '../components/icons';
 import ProofDialog from '../components/ProofDialog';
 import { officer, OFFICERS, WARDS } from '../lib/catalog';
 import { byPriority } from '../lib/duplicates';
+import { useT, type Key } from '../lib/i18n';
 import { officerStats } from '../lib/scoring';
 import { isOpen, urgency } from '../lib/sla';
 import { useNow, useStore } from '../lib/store';
 import type { Complaint } from '../lib/types';
 
 type Tab = 'queue' | 'escalated' | 'awaiting' | 'done' | 'team';
+const LABELS: Record<Tab, Key> = { queue: 'desk.tabQueue', escalated: 'desk.tabEsc', awaiting: 'desk.tabAwait', done: 'desk.tabDone', team: 'desk.tabTeam' };
 
 export default function OfficerDesk() {
   const { db, session, startWork } = useStore();
-  const now = useNow(1000);
+  const { t, designation, wardName } = useT();
+  const now = useNow(30_000);
   const [tab, setTab] = useState<Tab>('queue');
   const [proofFor, setProofFor] = useState<Complaint | null>(null);
   const me = officer(session?.role === 'officer' ? session.officerId : '')!;
@@ -33,69 +37,67 @@ export default function OfficerDesk() {
       awaiting: db.complaints.filter((c) => c.status === 'resolved' && c.resolvedBy === me.id),
       done: db.complaints.filter((c) => c.status === 'closed' && c.resolvedBy === me.id).sort((a, b) => (b.resolvedAt ?? 0) - (a.resolvedAt ?? 0)),
     };
-    // `now` changes every second; re-sorting each tick is cheap at this size.
   }, [db.complaints, me.id, now]);
 
   const dueSoon = groups.queue.filter((c) => urgency(c, now) === 'soon').length;
-  const labels: Record<Tab, string> = {
-    queue: 'My queue',
-    escalated: 'Escalated to me',
-    awaiting: 'Awaiting citizen',
-    done: 'Closed',
-    team: 'My team',
-  };
-  const tabs = (Object.keys(labels) as Tab[]).filter((t) => t !== 'team' || team.length > 0);
-  const area = me.beat ? WARDS.filter((w) => w.beat === me.beat).map((w) => w.name).join(', ') : me.dept ? 'All wards' : 'Whole city, all departments';
+  const tabs = (Object.keys(LABELS) as Tab[]).filter((k) => k !== 'team' || team.length > 0);
+  const area = me.beat
+    ? WARDS.filter((w) => w.beat === me.beat)
+        .map((w) => wardName(w.id))
+        .join(', ')
+    : me.dept
+      ? t('desk.allWards')
+      : t('desk.city');
 
   return (
     <div className="wrap">
       <div className="page-head">
-        <span className="kicker">Officer desk</span>
-        <div className="row" style={{ marginTop: 12, gap: 16 }}>
+        <span className="kicker">{t('desk.kicker')}</span>
+        <div className="row" style={{ marginTop: '0.75rem', gap: '1rem' }}>
           <Avatar name={me.name} lg />
           <div>
             <h1 style={{ marginTop: 0 }}>{me.name}</h1>
-            <p style={{ marginTop: 6 }}>
-              {me.designation} · {area}
+            <p style={{ marginTop: '0.35rem' }}>
+              {designation(me)} · {area}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="kv" style={{ marginBottom: 24 }}>
+      <div className="kv" style={{ marginBottom: '1.4rem' }}>
         <div>
           <b>{groups.queue.length}</b>
-          <span>Open with me</span>
+          <span>{t('desk.open')}</span>
         </div>
         <div>
           <b style={{ color: dueSoon ? 'var(--warn)' : undefined }}>{dueSoon}</b>
-          <span>Due within a day</span>
+          <span>{t('desk.soon')}</span>
         </div>
         <div>
           <b>{groups.escalated.length}</b>
-          <span>Escalated to me</span>
+          <span>{t('desk.escalated')}</span>
         </div>
         <div>
           <b>{stats.score}</b>
-          <span>My score · grade {stats.grade}</span>
+          <span>{t('desk.score', { g: stats.grade })}</span>
         </div>
         <div>
           <b>
             {stats.onTime}/{stats.resolved}
           </b>
-          <span>Fixed on time</span>
+          <span>{t('desk.onTime')}</span>
         </div>
         <div>
           <b style={{ color: stats.escalations ? 'var(--bad)' : undefined }}>{stats.escalations}</b>
-          <span>Deadlines I missed</span>
+          <span>{t('desk.missed')}</span>
         </div>
       </div>
 
       <div className="tabs" role="tablist">
-        {tabs.map((t) => (
-          <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)}>
-            {labels[t]}
-            {t !== 'team' && <span className="count">{groups[t].length}</span>}
+        {tabs.map((k) => (
+          <button key={k} role="tab" type="button" aria-selected={tab === k} onClick={() => setTab(k)}>
+            {t(LABELS[k])}
+            {k !== 'team' && <span className="count">{groups[k].length}</span>}
           </button>
         ))}
       </div>
@@ -105,15 +107,15 @@ export default function OfficerDesk() {
           {team.map((o) => {
             const s = officerStats(o.id, db.complaints);
             return (
-              <Link key={o.id} to={`/officers/${o.id}`} className="ofc-row" style={{ gridTemplateColumns: '44px minmax(0,1fr) auto' }}>
+              <Link key={o.id} to={`/officers/${o.id}`} className="ofc-row" style={{ gridTemplateColumns: '3rem minmax(0,1fr) auto' }}>
                 <Avatar name={o.name} />
-                <span>
+                <span style={{ minWidth: 0 }}>
                   <span className="ofc-name">{o.name}</span>
                   <span className="ofc-sub" style={{ display: 'block' }}>
-                    {o.designation} · {s.open} open · {s.escalations} missed deadlines
+                    {t('desk.teamRow', { designation: designation(o), open: s.open, esc: s.escalations })}
                   </span>
                 </span>
-                <span className="ofc-score">
+                <span className="ofc-score" aria-label={t('of.scoreLabel', { s: s.score, g: s.grade })}>
                   {s.score}
                   <span className={`grade ${s.grade}`}>{s.grade}</span>
                 </span>
@@ -124,17 +126,17 @@ export default function OfficerDesk() {
       ) : groups[tab].length ? (
         <div className="clist" role="tabpanel">
           {groups[tab].map((c) => (
-            <div key={c.id} className="stack" style={{ gap: 6 }}>
+            <div key={c.id} className="stack" style={{ gap: '0.4rem' }}>
               <ComplaintCard c={c} now={now} />
               {tab !== 'done' && tab !== 'awaiting' && (
                 <div className="row" style={{ justifyContent: 'flex-end' }}>
                   {c.status !== 'in_progress' && (
                     <button className="btn btn-sm" type="button" onClick={() => startWork(c.id)}>
-                      Start work
+                      <Icon name="tools" size={20} /> {t('cd.start')}
                     </button>
                   )}
                   <button className="btn btn-sm btn-primary" type="button" onClick={() => setProofFor(c)}>
-                    Upload proof
+                    <Icon name="camera" size={20} /> {t('desk.upload')}
                   </button>
                 </div>
               )}
@@ -142,9 +144,9 @@ export default function OfficerDesk() {
           ))}
         </div>
       ) : (
-        <Empty title={tab === 'queue' ? 'Queue clear' : 'Nothing here'}>
-          {tab === 'queue' && <span>No open complaints are assigned to you. New ones appear here with their deadline.</span>}
-          {tab === 'escalated' && <span>Complaints your team missed come here. None right now.</span>}
+        <Empty title={tab === 'queue' ? t('desk.emptyQueue') : t('desk.empty')}>
+          {tab === 'queue' && <span>{t('desk.emptyQueueBody')}</span>}
+          {tab === 'escalated' && <span>{t('desk.emptyEscBody')}</span>}
         </Empty>
       )}
 

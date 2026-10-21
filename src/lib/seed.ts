@@ -1,4 +1,4 @@
-import { assignee, CATEGORIES, category, chainFrom, WARDS } from './catalog';
+import { assignee, CATEGORIES, category, chainFrom, CORE_CATEGORIES, WARDS } from './catalog';
 import { between, mulberry32, pick } from './rand';
 import { SCENE_FOR_CATEGORY, seedRef } from './scenes';
 import { DAY, escalationDays, HOUR } from './sla';
@@ -54,7 +54,7 @@ export function seedDB(now: number): DB {
 
   PLANS.forEach((plan, i) => {
     seq++;
-    const cat = i < 5 ? CATEGORIES[[0, 6, 4, 8, 10][i]] : pick(r, CATEGORIES);
+    const cat = i < 5 ? CATEGORIES[[0, 6, 4, 8, 10][i]] : pick(r, CORE_CATEGORIES);
     const w = i < 5 ? WARDS[0] : pick(r, WARDS);
     const id = `JD-26-${String(seq).padStart(5, '0')}`;
     const citizenId = i < 5 ? DEMO_CITIZEN_ID : pick(r, CITIZENS.slice(1)).id;

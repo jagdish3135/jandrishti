@@ -2,7 +2,8 @@ import L from 'leaflet';
 import { useEffect, useMemo } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { Link } from 'react-router';
-import { category, CITY, officer, ward } from '../lib/catalog';
+import { CITY, officer } from '../lib/catalog';
+import { useT } from '../lib/i18n';
 import { escalationCount, urgency } from '../lib/sla';
 import type { Complaint } from '../lib/types';
 
@@ -55,24 +56,25 @@ function Fit({ points }: { points: [number, number][] }) {
 }
 
 export function ComplaintsMap({ complaints, now, fit = true }: { complaints: Complaint[]; now: number; fit?: boolean }) {
+  const { t, complaintTitle, wardName } = useT();
   const points = useMemo(() => complaints.map((c) => [c.lat, c.lng] as [number, number]), [complaints]);
   return (
     <MapContainer className="map" center={[CITY.lat, CITY.lng]} zoom={12} scrollWheelZoom={false}>
       <TileLayer url={TILE} attribution={ATTR} />
       {fit && <Fit points={points} />}
       {complaints.map((c) => (
-        <Marker key={c.id} position={[c.lat, c.lng]} icon={icon(PIN_COLORS[pinKind(c, now)])} title={`${c.id}: ${category(c.categoryId)?.name}`}>
+        <Marker key={c.id} position={[c.lat, c.lng]} icon={icon(PIN_COLORS[pinKind(c, now)])} title={`${c.id}: ${complaintTitle(c)}`}>
           <Popup>
             <div className="mono" style={{ fontSize: '0.85rem' }}>
               {c.id}
             </div>
-            <strong>{category(c.categoryId)?.name}</strong>
+            <strong>{complaintTitle(c)}</strong>
             <div>
-              {ward(c.wardId)?.name}
+              {wardName(c.wardId)}
               {c.landmark ? ` · ${c.landmark}` : ''}
             </div>
-            <div>Officer: {officer(c.officerId)?.name}</div>
-            <Link to={`/complaints/${c.id}`}>See details →</Link>
+            <div>{t('map.officer', { name: officer(c.officerId)?.name ?? '' })}</div>
+            <Link to={`/complaints/${c.id}`}>{t('map.details')}</Link>
           </Popup>
         </Marker>
       ))}
@@ -102,19 +104,20 @@ export function PinPicker({
   onChange: (lat: number, lng: number) => void;
   others: Complaint[];
 }) {
+  const { t } = useT();
   const at = useMemo(() => (value ? ([value.lat, value.lng] as [number, number]) : null), [value]);
   return (
-    <MapContainer className="map" style={{ height: 340 }} center={[CITY.lat, CITY.lng]} zoom={12} scrollWheelZoom={false}>
+    <MapContainer className="map" style={{ height: '20rem' }} center={[CITY.lat, CITY.lng]} zoom={12} scrollWheelZoom={false}>
       <TileLayer url={TILE} attribution={ATTR} />
       <ClickToPin onPick={onChange} />
       <Recenter at={at} />
       {others.map((c) => (
-        <Marker key={c.id} position={[c.lat, c.lng]} icon={icon(PIN_COLORS.soon)} title={`Already reported: ${c.id}`} />
+        <Marker key={c.id} position={[c.lat, c.lng]} icon={icon(PIN_COLORS.soon)} title={t('map.reported', { id: c.id })} />
       ))}
       {value && (
         <Marker
           position={[value.lat, value.lng]}
-          icon={icon('#ffc21a', true)}
+          icon={icon('#1d64d8', true)}
           draggable
           eventHandlers={{
             dragend: (e) => {
@@ -122,7 +125,7 @@ export function PinPicker({
               onChange(p.lat, p.lng);
             },
           }}
-          title="Your complaint location"
+          title={t('map.yours')}
         />
       )}
     </MapContainer>

@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { assignee, category, officer } from './catalog';
+import { assignee, category } from './catalog';
 import { hashPhoto } from './photos';
 import { allPass } from './proof';
 import { seedDB } from './seed';
 import { applyEscalations, DAY, escalationDays, isOpen, type Escalation } from './sla';
+import type { Key } from './i18n-en';
 import type { Check, Citizen, Complaint, DB, PhotoSource, Session } from './types';
 
 const KEY = 'jd:v1';
@@ -24,12 +25,16 @@ function load(): DB {
 export interface Notice {
   id: number;
   tone: 'info' | 'warn' | 'ok' | 'bad';
-  text: string;
+  /** Translation key and values; `officerId` in vars is shown as that officer's name and title. */
+  key?: Key;
+  vars?: Record<string, string | number>;
+  text?: string;
   link?: string;
 }
 
 export interface NewComplaint {
   categoryId: string;
+  otherType?: string;
   wardId: string;
   description: string;
   lat: number;
@@ -101,12 +106,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const mine = (id: string) => s?.role === 'citizen' && dbRef.current.complaints.some((c) => c.id === id && c.citizenId === s.citizenId);
       const ordered = [...last.values()].sort((a, b) => Number(mine(b.complaintId)) - Number(mine(a.complaintId)));
       const shown = ordered.slice(0, 2);
-      for (const e of shown) {
-        const to = officer(e.to);
-        notify({ tone: 'warn', text: `${e.complaintId} missed its deadline and moved up to ${to?.name} (${to?.designation}).`, link: `/complaints/${e.complaintId}` });
-      }
-      if (ordered.length > shown.length)
-        notify({ tone: 'warn', text: `${ordered.length - shown.length} more complaints were escalated (${list.length} steps in all).`, link: '/map' });
+      for (const e of shown) notify({ tone: 'warn', key: 'toast.escalated', vars: { id: e.complaintId, officerId: e.to }, link: `/complaints/${e.complaintId}` });
+      if (ordered.length > shown.length) notify({ tone: 'warn', key: 'toast.moreEscalated', vars: { n: ordered.length - shown.length }, link: '/map' });
     },
     [notify],
   );
@@ -226,6 +227,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           id,
           citizenId,
           categoryId: input.categoryId,
+          otherType: cat.other ? input.otherType?.trim().slice(0, 60) || undefined : undefined,
           wardId: input.wardId,
           description: input.description.trim(),
           lat: input.lat,
@@ -294,7 +296,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             officerId: owner,
             deadline: t + escalationDays(c.categoryId) * DAY,
             resolvedAt: undefined,
-            events: [...c.events, { at: t, kind: 'reopened', officerId: owner, note: note.trim() || 'Not fixed' }],
+            events: [...c.events, { at: t, kind: 'reopened', officerId: owner, note: note.trim() || undefined }],
           };
         }),
       rate: (id, stars, note) =>
@@ -309,7 +311,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const fresh = seedDB(Date.now());
         dbRef.current = fresh;
         setDb(fresh);
-        notify({ tone: 'info', text: 'Demo data restored.' });
+        notify({ tone: 'info', key: 'toast.reset' });
         // Re-run the photo fingerprinting for the new seed.
         window.setTimeout(() => window.location.reload(), 400);
       },

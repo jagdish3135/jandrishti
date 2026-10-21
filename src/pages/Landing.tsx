@@ -2,41 +2,36 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Avatar, ComplaintCard, DEPT_ICON } from '../components/bits';
 import { Icon } from '../components/icons';
-import { assignee, CATEGORIES, category, chainFrom, DEPARTMENTS, OFFICERS } from '../lib/catalog';
+import { assignee, CATEGORIES, chainFrom, DEPARTMENTS, OFFICERS } from '../lib/catalog';
+import { useT, type Key } from '../lib/i18n';
 import { photoSrc } from '../lib/photos';
 import { officerStats } from '../lib/scoring';
 import { DAY, escalationCount, isOpen } from '../lib/sla';
+import { normaliseId } from '../lib/ids';
 import { useNow, useStore } from '../lib/store';
-
-/** Accepts "JD-26-00001", "jd 26 00001", "26-1" or just "1". */
-function normaliseId(input: string) {
-  const s = input.trim().toUpperCase().replace(/\s+/g, '-');
-  const m = s.match(/^(?:JD-?)?(?:(\d{2})-?)?(\d{1,5})$/);
-  if (!m) return s;
-  return `JD-${m[1] ?? '26'}-${m[2].padStart(5, '0')}`;
-}
 
 function TrackCard() {
   const { db, session } = useStore();
+  const { t } = useT();
   const navigate = useNavigate();
   const [id, setId] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!id.trim()) return setErr('Type your complaint number first.');
+    if (!id.trim()) return setErr(t('track.empty'));
     const want = normaliseId(id);
     if (db.complaints.some((c) => c.id === want)) navigate(`/complaints/${want}`);
-    else setErr(`We could not find ${want}. Check the number and try again.`);
+    else setErr(t('track.notFound', { id: want }));
   };
   return (
     <section className="track-card reveal d2" aria-labelledby="track-title">
       <h2 id="track-title">
-        <Icon name="search" /> Track your complaint
+        <Icon name="search" /> {t('track.title')}
       </h2>
-      <p>Enter the complaint number you got when you reported the problem.</p>
+      <p>{t('track.help')}</p>
       <form className="track-form" onSubmit={submit} noValidate>
         <label htmlFor="track-id" className="sr-only">
-          Complaint number
+          {t('track.label')}
         </label>
         <input
           id="track-id"
@@ -52,7 +47,7 @@ function TrackCard() {
           aria-describedby={err ? 'track-err' : undefined}
         />
         <button className="btn" type="submit">
-          Track
+          {t('track.btn')}
         </button>
       </form>
       {err && (
@@ -61,7 +56,7 @@ function TrackCard() {
         </p>
       )}
       <p className="track-try">
-        Try an example:{' '}
+        {t('track.try')}{' '}
         <button type="button" onClick={() => navigate('/complaints/JD-26-00001')}>
           JD-26-00001
         </button>
@@ -69,11 +64,11 @@ function TrackCard() {
       <div className="track-divider" />
       {session?.role === 'officer' ? (
         <Link className="btn btn-white" to="/desk">
-          Open my work list <Icon name="arrowRight" size={20} />
+          {t('home.ctaWork')} <Icon name="arrowRight" size={20} />
         </Link>
       ) : (
         <Link className="btn btn-white" to={session ? '/my' : '/login?next=%2Fmy'}>
-          See all my complaints <Icon name="arrowRight" size={20} />
+          {t('track.all')} <Icon name="arrowRight" size={20} />
         </Link>
       )}
     </section>
@@ -82,6 +77,7 @@ function TrackCard() {
 
 /** Loops through one complaint moving up the chain as deadlines pass. */
 function EscalationDemo() {
+  const { t, designation } = useT();
   const chain = useMemo(() => chainFrom(assignee('pothole', 'kothrud').id), []);
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -89,28 +85,26 @@ function EscalationDemo() {
       setStep(1);
       return;
     }
-    const t = window.setInterval(() => setStep((s) => (s + 1) % 4), 2600);
-    return () => window.clearInterval(t);
+    const id = window.setInterval(() => setStep((s) => (s + 1) % 4), 2600);
+    return () => window.clearInterval(id);
   }, []);
   const owner = Math.min(step, 2);
   const fixed = step === 3;
   return (
-    <div className="chain" aria-label="Example: a pothole complaint moving to senior officers as deadlines are missed">
+    <div className="chain" aria-label={t('acc.exampleLabel')}>
       <div className="chain-head">
-        <span>Example: pothole on Karve Road</span>
-        <span className={`pill ${fixed ? 'ok' : step === 0 ? 'ok' : 'esc'}`}>
-          {fixed ? 'Fixed' : step === 0 ? 'On time' : `Deadline missed ${step}×`}
-        </span>
+        <span>{t('acc.example')}</span>
+        <span className={`pill ${fixed || step === 0 ? 'ok' : 'esc'}`}>{fixed ? t('acc.fixed') : step === 0 ? t('acc.onTime') : t('acc.missedN', { n: step })}</span>
       </div>
       <ol className="ladder">
         {chain.map((o, i) => (
           <li key={o.id} className={i < owner ? 'missed' : i === owner ? 'now' : ''}>
             <span className="lvl">{o.level}</span>
             <span>
-              <strong>{o.designation}</strong>
+              <strong>{designation(o)}</strong>
               <small>{o.name}</small>
             </span>
-            <span className="tag">{i < owner ? 'Missed deadline' : i === owner ? (fixed ? 'Fixed it' : 'Working on it') : ''}</span>
+            <span className="tag">{i < owner ? t('acc.missed') : i === owner ? (fixed ? t('acc.fixedIt') : t('acc.working')) : ''}</span>
           </li>
         ))}
       </ol>
@@ -120,6 +114,7 @@ function EscalationDemo() {
 
 export default function Landing() {
   const { db, session } = useStore();
+  const { t, dept, catName, designation } = useT();
   const now = useNow(30_000);
   const list = db.complaints;
 
@@ -147,44 +142,51 @@ export default function Landing() {
   );
   const sample = useMemo(() => list.find((c) => c.status === 'closed' && c.proof && c.rating && c.rating.stars >= 4), [list]);
   const recent = useMemo(() => [...list].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3), [list]);
+  const steps: [Key, Key][] = [
+    ['how.s1t', 'how.s1'],
+    ['how.s2t', 'how.s2'],
+    ['how.s3t', 'how.s3'],
+    ['how.s4t', 'how.s4'],
+  ];
+  const faqs: [Key, Key][] = [
+    ['faq.q1', 'faq.a1'],
+    ['faq.q2', 'faq.a2'],
+    ['faq.q3', 'faq.a3'],
+    ['faq.q4', 'faq.a4'],
+    ['faq.q5', 'faq.a5'],
+    ['faq.q6', 'faq.a6'],
+  ];
 
   return (
     <>
       <section className="hero">
         <div className="wrap hero-grid">
           <div>
-            <span className="kicker reveal">Roads · Water · Drainage · Street lights · Garbage</span>
+            <span className="kicker reveal">{t('home.kicker')}</span>
             <h1 className="reveal d1">
-              Report a civic problem. <em>Know who will fix it, and by when.</em>
+              {t('home.h1a')} <em>{t('home.h1b')}</em>
             </h1>
-            <p className="hero-lede reveal d2">
-              Every complaint goes to a named officer with a fixed deadline. If the deadline is missed, it moves to their
-              senior officer automatically. A complaint is closed only when the officer shows a real photo of the work.
-            </p>
+            <p className="hero-lede reveal d2">{t('home.lede')}</p>
             <div className="hero-ctas reveal d3">
               {session?.role === 'officer' ? (
                 <Link className="btn btn-primary btn-lg" to="/desk">
-                  <Icon name="list" /> Open my work list
+                  <Icon name="list" /> {t('home.ctaWork')}
                 </Link>
               ) : (
                 <Link className="btn btn-primary btn-lg" to="/file">
-                  <Icon name="plus" /> Report a problem
+                  <Icon name="plus" /> {t('nav.report')}
                 </Link>
               )}
               <Link className="btn btn-lg" to="/map">
-                <Icon name="map" /> See complaints near me
+                <Icon name="map" /> {t('home.ctaMap')}
               </Link>
             </div>
             <ul className="hero-points reveal d3">
-              <li>
-                <Icon name="check" size={20} /> Free to use
-              </li>
-              <li>
-                <Icon name="check" size={20} /> Takes about 2 minutes
-              </li>
-              <li>
-                <Icon name="check" size={20} /> Track it any time
-              </li>
+              {(['home.p1', 'home.p2', 'home.p3'] as Key[]).map((k) => (
+                <li key={k}>
+                  <Icon name="check" size={20} /> {t(k)}
+                </li>
+              ))}
             </ul>
           </div>
           <TrackCard />
@@ -194,10 +196,10 @@ export default function Landing() {
       <section className="section wrap" aria-labelledby="services-title">
         <div className="section-head">
           <div>
-            <span className="kicker">Start here</span>
-            <h2 id="services-title">What would you like to report?</h2>
+            <span className="kicker">{t('svc.kicker')}</span>
+            <h2 id="services-title">{t('svc.title')}</h2>
           </div>
-          <p>Choose a service. You can pick the exact problem on the next page.</p>
+          <p>{t('svc.help')}</p>
         </div>
         <div className="services">
           {DEPARTMENTS.map((d) => (
@@ -205,10 +207,10 @@ export default function Landing() {
               <span className="service-ico">
                 <Icon name={DEPT_ICON[d.id]} size={28} />
               </span>
-              <b>{d.name}</b>
+              <b>{dept(d.id)}</b>
               <span>
-                {CATEGORIES.filter((c) => c.dept === d.id)
-                  .map((c) => c.name)
+                {CATEGORIES.filter((c) => c.dept === d.id && !c.other)
+                  .map((c) => catName(c.id))
                   .join(', ')}
               </span>
             </Link>
@@ -220,32 +222,19 @@ export default function Landing() {
         <div className="section wrap">
           <div className="section-head">
             <div>
-              <span className="kicker">How it works</span>
-              <h2 id="how-title">Four simple steps</h2>
+              <span className="kicker">{t('how.kicker')}</span>
+              <h2 id="how-title">{t('how.title')}</h2>
             </div>
-            <p>The same rules apply to every department, so you always know what happens next.</p>
+            <p>{t('how.help')}</p>
           </div>
           <ol className="steps">
-            <li>
-              <span className="num">1</span>
-              <h3>You report it</h3>
-              <p>Choose the problem, mark the place on the map and add a photo if you can.</p>
-            </li>
-            <li>
-              <span className="num">2</span>
-              <h3>An officer is named</h3>
-              <p>It goes to the officer for your ward, with a date by which it must be fixed.</p>
-            </li>
-            <li>
-              <span className="num">3</span>
-              <h3>Late? It goes up</h3>
-              <p>If the date passes, the complaint moves to the senior officer automatically.</p>
-            </li>
-            <li>
-              <span className="num">4</span>
-              <h3>Photo proof</h3>
-              <p>The officer must send a new photo from the site. You confirm it is really fixed.</p>
-            </li>
+            {steps.map(([title, body], i) => (
+              <li key={title}>
+                <span className="num">{i + 1}</span>
+                <h3>{t(title)}</h3>
+                <p>{t(body)}</p>
+              </li>
+            ))}
           </ol>
         </div>
       </section>
@@ -253,29 +242,29 @@ export default function Landing() {
       <section className="section wrap" aria-labelledby="numbers-title">
         <div className="section-head">
           <div>
-            <span className="kicker">Open record</span>
-            <h2 id="numbers-title">How the city is doing</h2>
+            <span className="kicker">{t('stats.kicker')}</span>
+            <h2 id="numbers-title">{t('stats.title')}</h2>
           </div>
           <Link className="btn btn-sm" to="/map">
-            View the map <Icon name="arrowRight" size={20} />
+            {t('stats.map')} <Icon name="arrowRight" size={20} />
           </Link>
         </div>
         <div className="stats">
           <div className="stat">
             <b>{stats.open}</b>
-            <span>Complaints being worked on</span>
+            <span>{t('stats.open')}</span>
           </div>
           <div className="stat">
             <b>{stats.onTimePct}%</b>
-            <span>Fixed before the deadline</span>
+            <span>{t('stats.onTime')}</span>
           </div>
           <div className="stat">
             <b>{stats.avgDays.toFixed(1)}</b>
-            <span>Average days to fix</span>
+            <span>{t('stats.days')}</span>
           </div>
           <div className={`stat${stats.escalated ? ' alert' : ''}`}>
             <b>{stats.escalated}</b>
-            <span>Moved to a senior officer</span>
+            <span>{t('stats.escalated')}</span>
           </div>
         </div>
       </section>
@@ -283,37 +272,29 @@ export default function Landing() {
       <section className="section wrap" style={{ paddingTop: 0 }}>
         <div className="grid-2">
           <div>
-            <span className="kicker">Accountability</span>
-            <h2 style={{ margin: '0.35rem 0 0.75rem' }}>If the deadline is missed, it goes up</h2>
-            <p className="muted">
-              Each problem type has a fixed time limit, from 1 day for a dangerous wire to 10 days for a broken footpath.
-              When the time runs out, the complaint moves to the next senior officer with a new, shorter deadline, all
-              the way up to the Additional Municipal Commissioner. Every missed deadline is shown on the officer's
-              public record.
-            </p>
+            <span className="kicker">{t('acc.kicker')}</span>
+            <h2 style={{ margin: '0.35rem 0 0.75rem' }}>{t('acc.title')}</h2>
+            <p className="muted">{t('acc.body')}</p>
             <EscalationDemo />
           </div>
           {sample && (
             <div>
-              <span className="kicker">Proof of work</span>
-              <h2 style={{ margin: '0.35rem 0 0.75rem' }}>Old photos cannot close a case</h2>
-              <p className="muted">
-                The officer must take a new photo at the site after the complaint was filed. Every photo gets a digital
-                fingerprint, so a reused photo is caught and recorded.
-              </p>
+              <span className="kicker">{t('pr.kicker')}</span>
+              <h2 style={{ margin: '0.35rem 0 0.75rem' }}>{t('pr.title')}</h2>
+              <p className="muted">{t('pr.body')}</p>
               <div className="panel">
                 <div className="photos">
                   <figure className="photo">
-                    <img src={photoSrc(sample.photo)} alt={`Citizen's photo of the ${category(sample.categoryId)?.name.toLowerCase()}`} />
-                    <figcaption>Before: citizen's photo</figcaption>
+                    <img src={photoSrc(sample.photo)} alt={t('cd.photoBefore')} />
+                    <figcaption>{t('pr.before')}</figcaption>
                   </figure>
                   <figure className="photo">
-                    <img src={photoSrc(sample.proof!.photo)} alt="Officer's photo after the repair" />
-                    <figcaption>After: officer's proof</figcaption>
+                    <img src={photoSrc(sample.proof!.photo)} alt={t('cd.photoAfter')} />
+                    <figcaption>{t('pr.after')}</figcaption>
                   </figure>
                 </div>
                 <Link to={`/complaints/${sample.id}`} style={{ display: 'inline-block', marginTop: '0.75rem', fontWeight: 700 }}>
-                  See this complaint ({sample.id})
+                  {t('pr.see', { id: sample.id })}
                 </Link>
               </div>
             </div>
@@ -327,8 +308,8 @@ export default function Landing() {
             <div>
               <div className="section-head" style={{ marginBottom: '1rem' }}>
                 <div>
-                  <span className="kicker">Recently reported</span>
-                  <h2>Latest complaints</h2>
+                  <span className="kicker">{t('rec.kicker')}</span>
+                  <h2>{t('rec.title')}</h2>
                 </div>
               </div>
               <div className="clist">
@@ -340,11 +321,11 @@ export default function Landing() {
             <div>
               <div className="section-head" style={{ marginBottom: '1rem' }}>
                 <div>
-                  <span className="kicker">Officer performance</span>
-                  <h2>Top officers</h2>
+                  <span className="kicker">{t('top.kicker')}</span>
+                  <h2>{t('top.title')}</h2>
                 </div>
                 <Link className="btn btn-sm" to="/officers">
-                  All officers
+                  {t('top.all')}
                 </Link>
               </div>
               <div className="clist">
@@ -355,10 +336,10 @@ export default function Landing() {
                     <span style={{ minWidth: 0 }}>
                       <span className="ofc-name">{o.name}</span>
                       <span className="ofc-sub" style={{ display: 'block' }}>
-                        {o.designation}
+                        {designation(o)}
                       </span>
                     </span>
-                    <span className="ofc-score">
+                    <span className="ofc-score" aria-label={t('of.scoreLabel', { s: s.score, g: s.grade })}>
                       {s.score}
                       <span className={`grade ${s.grade}`}>{s.grade}</span>
                     </span>
@@ -373,42 +354,16 @@ export default function Landing() {
       <section className="section wrap" aria-labelledby="faq-title">
         <div className="section-head">
           <div>
-            <span className="kicker">Help</span>
-            <h2 id="faq-title">Common questions</h2>
+            <span className="kicker">{t('faq.kicker')}</span>
+            <h2 id="faq-title">{t('faq.title')}</h2>
           </div>
         </div>
-        <details className="faq">
-          <summary>How do I know who is handling my complaint?</summary>
-          <div>
-            Open the complaint. You will see the officer's name and designation, the date it must be fixed by, and who it
-            will go to if that date is missed.
-          </div>
-        </details>
-        <details className="faq">
-          <summary>What happens if nothing is done?</summary>
-          <div>
-            When the deadline passes, the complaint moves to the senior officer automatically. You do not need to call or
-            visit any office. It keeps moving up until it is fixed.
-          </div>
-        </details>
-        <details className="faq">
-          <summary>My neighbour already reported the same problem. What should I do?</summary>
-          <div>
-            When you mark the place on the map, we show complaints of the same type nearby. Press "Support this
-            instead". More people supporting a complaint gives it higher priority.
-          </div>
-        </details>
-        <details className="faq">
-          <summary>Is my Aadhaar number stored?</summary>
-          <div>
-            No. In this demo, the number is only checked for typing mistakes on your own device, and only the last 4
-            digits are kept. Your name is never shown publicly.
-          </div>
-        </details>
-        <details className="faq">
-          <summary>The text is too small. Can I make it bigger?</summary>
-          <div>Yes. Use the A− A A+ buttons at the very top of the page. Your choice is remembered.</div>
-        </details>
+        {faqs.map(([q, a]) => (
+          <details className="faq" key={q}>
+            <summary>{t(q)}</summary>
+            <div>{t(a)}</div>
+          </details>
+        ))}
       </section>
     </>
   );

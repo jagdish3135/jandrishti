@@ -3,22 +3,27 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Avatar, DEPT_ICON } from '../components/bits';
 import { Icon } from '../components/icons';
 import { PinPicker } from '../components/Maps';
-import { assignee, CATEGORIES, DEPARTMENTS, ward as wardById } from '../lib/catalog';
+import { assignee, CATEGORIES, DEPARTMENTS } from '../lib/catalog';
 import { findDuplicates } from '../lib/duplicates';
-import { fmtLong } from '../lib/format';
 import { formatDistance, wardFor } from '../lib/geo';
+import { useT } from '../lib/i18n';
 import { currentPosition, fileToJpeg, hashPhoto } from '../lib/photos';
 import { DAY } from '../lib/sla';
 import { useStore } from '../lib/store';
+import type { DeptId } from '../lib/types';
 
 const MAX_TEXT = 600;
+const isDept = (v: string | null): v is DeptId => !!v && DEPARTMENTS.some((d) => d.id === v);
 
 export default function FileComplaint() {
   const { db, file, support, notify, now, session } = useStore();
+  const { t, dept: deptName, catName, wardName, designation, days, fmtLong } = useT();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const deptParam = params.get('dept');
+  const fromHome = params.get('dept');
+  const [dept, setDept] = useState<DeptId | ''>(isDept(fromHome) ? fromHome : '');
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [otherType, setOtherType] = useState('');
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [landmark, setLandmark] = useState('');
   const [text, setText] = useState('');
@@ -30,22 +35,28 @@ export default function FileComplaint() {
   const [submitting, setSubmitting] = useState(false);
 
   const w = pin ? wardFor(pin.lat, pin.lng) : null;
-  const cat = CATEGORIES.find((c) => c.id === categoryId);
+  const cat = CATEGORIES.find((c) => c.id === categoryId && c.dept === dept);
+  const types = CATEGORIES.filter((c) => c.dept === dept);
   const owner = cat && w ? assignee(cat.id, w.id) : null;
+  const problemDone = !!cat && (!cat.other || otherType.trim().length >= 3);
+  // "Other" complaints are all different, so they are never treated as duplicates.
   const dupes = useMemo(
-    () => (cat && pin ? findDuplicates(db.complaints, { categoryId: cat.id, lat: pin.lat, lng: pin.lng }) : []),
+    () => (cat && !cat.other && pin ? findDuplicates(db.complaints, { categoryId: cat.id, lat: pin.lat, lng: pin.lng }) : []),
     [db.complaints, cat, pin],
   );
   const myId = session?.role === 'citizen' ? session.citizenId : '';
-  const sameKindNearby = useMemo(() => (cat ? db.complaints.filter((c) => c.categoryId === cat.id && c.status !== 'closed') : []), [db.complaints, cat]);
+  const sameKindNearby = useMemo(
+    () => (cat && !cat.other ? db.complaints.filter((c) => c.categoryId === cat.id && c.status !== 'closed') : []),
+    [db.complaints, cat],
+  );
 
   const useMyLocation = async () => {
     setLocating(true);
     const p = await currentPosition();
     setLocating(false);
-    if (!p) return setErrors((e) => ({ ...e, pin: 'Could not get your location. Tap the map instead.' }));
+    if (!p) return setErrors((e) => ({ ...e, pin: t('file.errLocate') }));
     setPin(p);
-    setErrors((e) => ({ ...e, pin: wardFor(p.lat, p.lng) ? '' : 'You are outside the demo area (6 wards of Pune). Tap the map to place a pin.' }));
+    setErrors((e) => ({ ...e, pin: wardFor(p.lat, p.lng) ? '' : t('file.errLocateOut') }));
   };
 
   const onPhoto = async (f: File | undefined) => {
@@ -65,20 +76,22 @@ export default function FileComplaint() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
-    if (!cat) errs.cat = 'Pick what the problem is.';
-    if (!pin) errs.pin = 'Place a pin where the problem is.';
-    else if (!w) errs.pin = 'That spot is outside the demo area. Pick a point inside one of the 6 wards.';
-    if (text.trim().length < 10) errs.text = 'Describe the problem in a sentence or two (at least 10 characters).';
-    if (dupes.length && !separate) errs.dupe = 'Someone already reported this nearby. Support their complaint, or confirm yours is different.';
+    if (!dept) errs.dept = t('file.errDept');
+    else if (!cat) errs.cat = t('file.errCat');
+    else if (cat.other && otherType.trim().length < 3) errs.other = t('file.errOther');
+    if (!pin) errs.pin = t('file.errPin');
+    else if (!w) errs.pin = t('file.errOutside');
+    if (text.trim().length < 10) errs.text = t('file.errText');
+    if (dupes.length && !separate) errs.dupe = t('file.errDup');
     setErrors(errs);
     if (Object.values(errs).some(Boolean)) {
-      document.querySelector('[data-err="true"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window.setTimeout(() => document.querySelector('[data-err="true"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
       return;
     }
     setSubmitting(true);
     try {
-      const id = file({ categoryId: cat!.id, wardId: w!.id, description: text, lat: pin!.lat, lng: pin!.lng, landmark, photo: photo?.url, photoHash: photo?.hash });
-      notify({ tone: 'ok', text: `Complaint sent. Your number is ${id}. It is now with ${owner?.name}.` });
+      const id = file({ categoryId: cat!.id, otherType, wardId: w!.id, description: text, lat: pin!.lat, lng: pin!.lng, landmark, photo: photo?.url, photoHash: photo?.hash });
+      notify({ tone: 'ok', key: 'toast.filed', vars: { id, officerId: owner!.id } });
       navigate(`/complaints/${id}`);
     } catch (err) {
       setErrors({ submit: (err as Error).message });
@@ -86,68 +99,142 @@ export default function FileComplaint() {
     }
   };
 
+  const stepDone = (done: boolean, n: number) => (
+    <span className="step-num">{done ? <Icon name="check" size={18} /> : n}</span>
+  );
+
   return (
     <div className="wrap">
       <div className="page-head">
-        <span className="kicker">Report a problem</span>
-        <h1>What needs fixing?</h1>
-        <p>Answer three short questions. Your complaint goes straight to the officer for that area, with a date by which it must be fixed.</p>
+        <span className="kicker">{t('file.kicker')}</span>
+        <h1>{t('file.title')}</h1>
+        <p>{t('file.help')}</p>
       </div>
 
-      <div className="steps-bar" aria-label="Your progress">
-        <span className={cat ? 'done' : ''}>
-          <span className="step-num">{cat ? <Icon name="check" size={18} /> : 1}</span> Problem
+      <div className="steps-bar" aria-label={t('file.progress')}>
+        <span className={problemDone ? 'done' : ''}>
+          {stepDone(problemDone, 1)} {t('file.stepProblem')}
         </span>
         <span className={pin && w ? 'done' : ''}>
-          <span className="step-num">{pin && w ? <Icon name="check" size={18} /> : 2}</span> Place
+          {stepDone(!!(pin && w), 2)} {t('file.stepPlace')}
         </span>
         <span className={text.trim().length >= 10 ? 'done' : ''}>
-          <span className="step-num">{text.trim().length >= 10 ? <Icon name="check" size={18} /> : 3}</span> Details
+          {stepDone(text.trim().length >= 10, 3)} {t('file.stepDetails')}
         </span>
       </div>
 
       <form className="grid-2" onSubmit={submit} noValidate>
         <div className="stack">
-          <section className="panel" data-err={!!errors.cat}>
+          <section className="panel" data-err={!!(errors.dept || errors.cat || errors.other)}>
             <div className="panel-title">
-              <h2 className="row">
-                <span className="step-num">1</span> What is the problem?
+              <h2>
+                <span className="step-num">1</span> {t('file.q1')}
               </h2>
             </div>
-            {[...DEPARTMENTS].sort((a, b) => Number(b.id === deptParam) - Number(a.id === deptParam)).map((d) => (
-              <fieldset key={d.id} style={{ border: 0, padding: 0, margin: '0 0 14px' }}>
-                <legend className="label" style={{ marginBottom: '0.5rem' }}>
-                  {d.name}
-                </legend>
+
+            <label className="field">
+              <span>{t('file.dept')}</span>
+              <div className="select-wrap">
+                {dept && (
+                  <span className="select-ico" aria-hidden="true">
+                    <Icon name={DEPT_ICON[dept]} size={22} />
+                  </span>
+                )}
+                <select
+                  className={`input${dept ? ' has-ico' : ''}`}
+                  value={dept}
+                  aria-invalid={!!errors.dept}
+                  onChange={(e) => {
+                    setDept(e.target.value as DeptId);
+                    setCategoryId(null);
+                    setErrors((x) => ({ ...x, dept: '', cat: '', other: '' }));
+                  }}
+                >
+                  <option value="">{t('file.deptChoose')}</option>
+                  {DEPARTMENTS.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {deptName(d.id)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <span className="hint">{t('file.deptHelp')}</span>
+            </label>
+            {errors.dept && (
+              <p className="err" role="alert">
+                {errors.dept}
+              </p>
+            )}
+
+            {dept && (
+              <fieldset className="types" aria-describedby={errors.cat ? 'cat-err' : undefined}>
+                <legend className="label">{t('file.type')}</legend>
                 <div className="cat-grid">
-                  {CATEGORIES.filter((c) => c.dept === d.id).map((c) => (
-                    <button key={c.id} type="button" className="cat" aria-pressed={categoryId === c.id} onClick={() => setCategoryId(c.id)}>
+                  {types.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`cat${c.other ? ' cat-other' : ''}`}
+                      aria-pressed={categoryId === c.id}
+                      onClick={() => {
+                        setCategoryId(c.id);
+                        setSeparate(false);
+                        setErrors((x) => ({ ...x, cat: '', other: '' }));
+                      }}
+                    >
                       <span className="cat-glyph" aria-hidden="true">
-                        <Icon name={DEPT_ICON[c.dept]} size={22} />
+                        <Icon name={c.other ? 'more' : DEPT_ICON[c.dept]} size={22} />
                       </span>
                       <span>
-                        {c.name}
-                        <small>Must be fixed within {c.slaDays === 1 ? '1 day' : `${c.slaDays} days`}</small>
+                        {catName(c.id)}
+                        <small>{c.other ? t('file.otherHelp') : t('file.within', { span: days(c.slaDays) })}</small>
                       </span>
                     </button>
                   ))}
                 </div>
+                {errors.cat && (
+                  <p id="cat-err" className="err" role="alert">
+                    {errors.cat}
+                  </p>
+                )}
+                {cat?.other && (
+                  <label className="field" style={{ marginTop: '0.9rem' }}>
+                    <span>{t('file.otherLabel')}</span>
+                    <input
+                      className="input"
+                      maxLength={60}
+                      value={otherType}
+                      placeholder={t('file.otherPh')}
+                      onChange={(e) => {
+                        setOtherType(e.target.value);
+                        setErrors((x) => ({ ...x, other: '' }));
+                      }}
+                      aria-invalid={!!errors.other}
+                      autoFocus
+                    />
+                    <span className="hint">{t('file.within', { span: days(cat.slaDays) })}</span>
+                  </label>
+                )}
+                {errors.other && (
+                  <p className="err" role="alert">
+                    {errors.other}
+                  </p>
+                )}
               </fieldset>
-            ))}
-            {errors.cat && <p className="err" role="alert">{errors.cat}</p>}
+            )}
           </section>
 
           <section className="panel" data-err={!!errors.pin}>
             <div className="panel-title">
-              <h2 className="row">
-                <span className="step-num">2</span> Where is it?
+              <h2>
+                <span className="step-num">2</span> {t('file.q2')}
               </h2>
               <button className="btn btn-sm" type="button" onClick={useMyLocation} disabled={locating}>
-                <Icon name="pin" size={20} /> {locating ? 'Finding you…' : 'Use my location'}
+                <Icon name="pin" size={20} /> {locating ? t('file.finding') : t('file.useLocation')}
               </button>
             </div>
             <p className="hint" style={{ marginTop: 0 }}>
-              Tap the map where the problem is. You can drag the pin to move it. {cat && sameKindNearby.length > 0 && 'Orange pins show the same problem already reported by others.'}
+              {t('file.mapHelp')} {sameKindNearby.length > 0 && t('file.mapHelpDup')}
             </p>
             <PinPicker
               value={pin}
@@ -155,13 +242,17 @@ export default function FileComplaint() {
               onChange={(lat, lng) => {
                 setPin({ lat, lng });
                 setSeparate(false);
-                setErrors((e) => ({ ...e, pin: wardFor(lat, lng) ? '' : 'That spot is outside the demo area. Pick a point inside one of the 6 wards.' }));
+                setErrors((e) => ({ ...e, pin: wardFor(lat, lng) ? '' : t('file.errOutside') }));
               }}
             />
-            {errors.pin && <p className="err" role="alert">{errors.pin}</p>}
-            <label className="field" style={{ marginTop: 14 }}>
-              <span>Nearby landmark (optional)</span>
-              <input className="input" maxLength={80} placeholder="e.g. opposite Vanaz bus stop" value={landmark} onChange={(e) => setLandmark(e.target.value)} />
+            {errors.pin && (
+              <p className="err" role="alert">
+                {errors.pin}
+              </p>
+            )}
+            <label className="field" style={{ marginTop: '0.9rem' }}>
+              <span>{t('file.landmark')}</span>
+              <input className="input" maxLength={80} placeholder={t('file.landmarkPh')} value={landmark} onChange={(e) => setLandmark(e.target.value)} />
             </label>
           </section>
 
@@ -169,17 +260,17 @@ export default function FileComplaint() {
             <section className="callout" data-err={!!errors.dupe} aria-live="polite">
               <Icon name="users" />
               <div className="stack" style={{ gap: '0.6rem' }}>
-                <strong>Someone already reported this {formatDistance(dupes[0].meters)} away</strong>
+                <strong>{t('file.dupTitle', { dist: formatDistance(dupes[0].meters) })}</strong>
                 {dupes.slice(0, 2).map(({ complaint: d, meters }) => {
                   const mine = d.citizenId === myId || d.supporters.includes(myId);
                   return (
                     <div key={d.id} className="row" style={{ justifyContent: 'space-between' }}>
                       <span>
-                        <span className="mono">{d.id}</span> · {formatDistance(meters)} away · {d.supporters.length + 1} people affected
+                        <span className="mono">{d.id}</span> · {t('file.dupRow', { dist: formatDistance(meters), n: d.supporters.length + 1 })}
                       </span>
                       {mine ? (
                         <Link className="btn btn-sm" to={`/complaints/${d.id}`}>
-                          You're on it · view
+                          {t('file.dupMine')}
                         </Link>
                       ) : (
                         <button
@@ -187,11 +278,11 @@ export default function FileComplaint() {
                           type="button"
                           onClick={() => {
                             support(d.id);
-                            notify({ tone: 'ok', text: `You now support ${d.id}. More supporters means higher priority.` });
+                            notify({ tone: 'ok', key: 'toast.supported', vars: { id: d.id } });
                             navigate(`/complaints/${d.id}`);
                           }}
                         >
-                          Support this instead
+                          {t('file.dupSupport')}
                         </button>
                       )}
                     </div>
@@ -199,87 +290,103 @@ export default function FileComplaint() {
                 })}
                 <label className="row" style={{ gap: '0.6rem', fontWeight: 600 }}>
                   <input type="checkbox" checked={separate} onChange={(e) => setSeparate(e.target.checked)} style={{ width: '1.4rem', height: '1.4rem' }} />
-                  Mine is a different problem. Report it separately.
+                  {t('file.dupSeparate')}
                 </label>
-                {errors.dupe && <p className="err" role="alert" style={{ margin: 0 }}>{errors.dupe}</p>}
+                {errors.dupe && (
+                  <p className="err" role="alert">
+                    {errors.dupe}
+                  </p>
+                )}
               </div>
             </section>
           )}
 
           <section className="panel" data-err={!!errors.text}>
             <div className="panel-title">
-              <h2 className="row">
-                <span className="step-num">3</span> Tell us more
+              <h2>
+                <span className="step-num">3</span> {t('file.q3')}
               </h2>
               <span className="hint">
                 {text.length}/{MAX_TEXT}
               </span>
             </div>
             <label className="field">
-              <span>Describe the problem</span>
-              <textarea className="input" maxLength={MAX_TEXT} value={text} onChange={(e) => setText(e.target.value)} placeholder="For example: Deep pothole near the bus stop, there since Monday. Scooters are slipping." aria-invalid={!!errors.text} />
+              <span>{t('file.describe')}</span>
+              <textarea className="input" maxLength={MAX_TEXT} value={text} onChange={(e) => setText(e.target.value)} placeholder={t('file.describePh')} aria-invalid={!!errors.text} />
             </label>
-            {errors.text && <p className="err" role="alert">{errors.text}</p>}
+            {errors.text && (
+              <p className="err" role="alert">
+                {errors.text}
+              </p>
+            )}
 
-            <div className="field" style={{ marginTop: 16 }}>
-              <span>Add a photo (optional, but it helps)</span>
+            <div className="field" style={{ marginTop: '1rem' }}>
+              <span>{t('file.photo')}</span>
               {photo ? (
                 <div className="photo-preview">
-                  <img src={photo.url} alt="Your photo of the problem" />
+                  <img src={photo.url} alt={t('file.photoAlt')} />
                   <button className="btn btn-sm" type="button" onClick={() => setPhoto(null)}>
-                    Remove
+                    {t('file.remove')}
                   </button>
                 </div>
               ) : (
                 <label className="dropzone">
                   <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => onPhoto(e.target.files?.[0])} />
                   <Icon name="camera" size={34} />
-                  <b>{photoBusy ? 'Preparing photo…' : 'Take a photo or choose one'}</b>
-                  <span className="hint">Any photo from your phone, up to 15 MB.</span>
+                  <b>{photoBusy ? t('file.photoBusy') : t('file.photoBtn')}</b>
+                  <span className="hint">{t('file.photoHint')}</span>
                 </label>
               )}
-              {errors.photo && <p className="err" role="alert">{errors.photo}</p>}
+              {errors.photo && (
+                <p className="err" role="alert">
+                  {errors.photo}
+                </p>
+              )}
             </div>
           </section>
         </div>
 
-        <aside className="stack" style={{ position: 'sticky', top: 88 }}>
+        <aside className="stack" style={{ position: 'sticky', top: '6rem' }}>
           <div className="panel strong">
-            <span className="kicker">Who will handle it</span>
+            <span className="kicker">{t('file.who')}</span>
             {owner && cat && w ? (
-              <div className="stack" style={{ gap: 14, marginTop: 12 }}>
-                <div className="row">
+              <div className="stack" style={{ gap: '0.9rem', marginTop: '0.75rem' }}>
+                <div className="row" style={{ flexWrap: 'nowrap' }}>
                   <Avatar name={owner.name} />
                   <div>
                     <strong>{owner.name}</strong>
-                    <div className="hint">{owner.designation}</div>
+                    <div className="hint">{designation(owner)}</div>
                   </div>
                 </div>
                 <div className="sla">
                   <span className="sla-label">
-                    <Icon name="calendar" /> Must be fixed by
+                    <Icon name="calendar" /> {t('sla.mustBy')}
                   </span>
                   <span className="sla-time">{fmtLong(now() + cat.slaDays * DAY)}</span>
                   <span className="sla-sub">
-                    {cat.name} · {wardById(w.id)?.name} ward · {cat.slaDays} day{cat.slaDays > 1 ? 's' : ''}
+                    {t('file.wardDays', { cat: cat.other && otherType.trim() ? otherType.trim() : catName(cat.id), ward: wardName(w.id), span: days(cat.slaDays) })}
                   </span>
                 </div>
                 <p className="hint" style={{ margin: 0 }}>
-                  If it is not fixed by then, it goes to their senior officer automatically.
+                  {t('file.goesUp')}
                 </p>
               </div>
             ) : (
               <p className="muted" style={{ marginBottom: 0 }}>
-                Choose the problem and mark the place. We will show you the officer's name and the deadline here.
+                {t('file.whoEmpty')}
               </p>
             )}
           </div>
-          {errors.submit && <p className="err" role="alert">{errors.submit}</p>}
+          {errors.submit && (
+            <p className="err" role="alert">
+              {errors.submit}
+            </p>
+          )}
           <button className="btn btn-primary btn-lg btn-block" type="submit" disabled={submitting}>
-            {submitting ? 'Sending…' : 'Send complaint'} <Icon name="arrowRight" />
+            {submitting ? t('file.sending') : t('file.send')} <Icon name="arrowRight" />
           </button>
           <p className="hint" style={{ margin: 0, textAlign: 'center' }}>
-            You will get a complaint number to track it.
+            {t('file.getNumber')}
           </p>
         </aside>
       </form>

@@ -27,7 +27,7 @@ const fonts = [
 ].join('');
 
 const THEMES = {
-  light: { bg: '#ffffff', page: '#f5f8fc', card: '#ffffff', ink: '#0f1b2d', muted: '#33425a', line: '#cbd6e6', blue: '#1450b8', deep: '#0b3b8c', tint: '#e8f0fc', onBlue: '#ffffff', warnBg: '#ffeadb', warn: '#9c3d00' },
+  light: { bg: '#ffffff', page: '#f6f9fe', card: '#ffffff', ink: '#0f1b2d', muted: '#33425a', line: '#cfdcef', blue: '#1a64d6', deep: '#1559c7', tint: '#e6f0fe', onBlue: '#ffffff', warnBg: '#ffeadb', warn: '#9c3d00' },
   dark: { bg: '#0b1424', page: '#0b1424', card: '#111e33', ink: '#eef3fb', muted: '#c6d2e4', line: '#2a3d60', blue: '#8ab8ff', deep: '#9cc3ff', tint: '#16284a', onBlue: '#0a1a33', warnBg: '#3d2312', warn: '#ffab76' },
 };
 const S = "font-family=\"'Literata'\" font-weight=\"700\"";

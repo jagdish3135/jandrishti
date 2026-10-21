@@ -1,4 +1,4 @@
-export type DeptId = 'roads' | 'water' | 'drainage' | 'electrical' | 'sanitation';
+export type DeptId = 'roads' | 'water' | 'drainage' | 'electrical' | 'sanitation' | 'parks' | 'health' | 'encroachment';
 
 export interface Department {
   id: DeptId;
@@ -12,6 +12,8 @@ export interface Category {
   name: string;
   slaDays: number;
   glyph: string;
+  /** "Other problem" for a department: the citizen names the problem themself. */
+  other?: boolean;
 }
 
 export interface Ward {
@@ -92,6 +94,8 @@ export interface Complaint {
   id: string;
   citizenId: string;
   categoryId: string;
+  /** What the citizen called it, when they chose "Other problem". */
+  otherType?: string;
   wardId: string;
   description: string;
   lat: number;

@@ -5,20 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JanDrishti · Report a civic problem and track it</title>
     <meta name="description" content="Report a problem with roads, water, drainage, street lights or garbage. See which officer will fix it and by when. Missed deadlines go to the senior officer automatically." />
-    <meta name="theme-color" content="#0b3b8c" />
+    <meta name="theme-color" content="#1a64d6" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Tiro+Devanagari+Hindi&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Tiro+Devanagari+Hindi&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Serif+Devanagari:wght@600;700&display=swap"
       rel="stylesheet"
     />
     <script>
       // Apply saved theme and text size before first paint. Light is the default:
       // it is the easiest to read for most people, and the toggle is one tap away.
       (function () {
-        var t = null, s = null;
-        try { t = localStorage.getItem('jd:theme'); s = localStorage.getItem('jd:text'); } catch (e) {}
+        var t = null, s = null, l = null;
+        try { t = localStorage.getItem('jd:theme'); s = localStorage.getItem('jd:text'); l = localStorage.getItem('jd:lang'); } catch (e) {}
+        if (l === 'hi' || l === 'mr') document.documentElement.lang = l;
         document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light';
         document.documentElement.dataset.text = s === 'lg' || s === 'xl' ? s : 'md';
       })();

@@ -235,3 +235,56 @@ describe('reopened complaints', () => {
     expect(checks.find((x) => x.id === 'reuse')).toMatchObject({ pass: false });
   });
 });
+
+describe('languages', () => {
+  it('has every English string in Hindi and Marathi, with the same placeholders', async () => {
+    const { DICTS } = await import('./i18n');
+    const holes = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join(',');
+    for (const lang of ['hi', 'mr'] as const) {
+      for (const [key, value] of Object.entries(DICTS.en)) {
+        const other = DICTS[lang][key as keyof typeof DICTS.en];
+        expect(other, `${lang} ${key}`).toBeTruthy();
+        expect(holes(other), `${lang} ${key}`).toBe(holes(value));
+      }
+    }
+  });
+  it('names every department, problem type, ward and officer title in each language', async () => {
+    const { makeT } = await import('./i18n');
+    const { CATEGORIES, DEPARTMENTS, OFFICERS, WARDS } = await import('./catalog');
+    for (const lang of ['en', 'hi', 'mr'] as const) {
+      const t = makeT(lang);
+      for (const d of DEPARTMENTS) expect(t.dept(d.id)).toBeTruthy();
+      for (const c of CATEGORIES) expect(t.catName(c.id)).toBeTruthy();
+      for (const w of WARDS) expect(t.wardName(w.id)).toBeTruthy();
+      for (const o of OFFICERS) expect(t.designation(o)).toBeTruthy();
+      if (lang !== 'en') expect(t.catName('pothole')).not.toBe('Pothole');
+    }
+    expect(makeT('en').wardName('kothrud')).toBe('Kothrud');
+    expect(makeT('mr').span(2 * DAY + 3 * HOUR)).toBe('2 दिवस 3 तास');
+    expect(makeT('hi').span(DAY)).toBe('1 दिन');
+  });
+});
+
+describe('departments and "Other" problems', () => {
+  it('gives every department an Other type that routes to its junior engineer', async () => {
+    const { CATEGORIES, DEPARTMENTS } = await import('./catalog');
+    for (const d of DEPARTMENTS) {
+      const other = CATEGORIES.find((c) => c.dept === d.id && c.other);
+      expect(other, d.id).toBeTruthy();
+      expect(assignee(other!.id, 'hadapsar').dept).toBe(d.id);
+    }
+  });
+  it('uses what the citizen wrote as the title of an Other complaint', async () => {
+    const { makeT } = await import('./i18n');
+    const t = makeT('hi');
+    expect(t.complaintTitle({ categoryId: 'roads-other', otherType: 'Broken bench' })).toBe('Broken bench');
+    expect(t.complaintTitle({ categoryId: 'roads-other' })).toBe('अन्य समस्या');
+  });
+  it('reads complaint numbers typed in short forms', async () => {
+    const { normaliseId } = await import('./ids');
+    expect(normaliseId('jd-26-1')).toBe('JD-26-00001');
+    expect(normaliseId(' 26 42 ')).toBe('JD-26-00042');
+    expect(normaliseId('7')).toBe('JD-26-00007');
+    expect(normaliseId('JD-26-00033')).toBe('JD-26-00033');
+  });
+});

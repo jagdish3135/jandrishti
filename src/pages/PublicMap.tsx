@@ -1,22 +1,24 @@
 import { useMemo, useState } from 'react';
 import { ComplaintsMap, PIN_COLORS, pinKind, type PinKind } from '../components/Maps';
 import { category, DEPARTMENTS, WARDS } from '../lib/catalog';
+import { useT, type Key } from '../lib/i18n';
 import { DAY, isOpen, urgency } from '../lib/sla';
 import { useNow, useStore } from '../lib/store';
 import type { DeptId } from '../lib/types';
 
-const KIND_LABEL: Record<PinKind, string> = {
-  ok: 'On track',
-  soon: 'Due soon',
-  escalated: 'Escalated',
-  overdue: 'Overdue at top',
-  resolved: 'Awaiting citizen',
-  closed: 'Closed',
+const KIND_LABEL: Record<PinKind, Key> = {
+  ok: 'map.ok',
+  soon: 'map.soon',
+  escalated: 'map.escalated',
+  overdue: 'map.overdue',
+  resolved: 'map.resolved',
+  closed: 'map.closed',
 };
 
 export default function PublicMap() {
   const { db } = useStore();
-  const now = useNow(10_000);
+  const { t, deptShort, wardName } = useT();
+  const now = useNow(30_000);
   const [dept, setDept] = useState<DeptId | 'all'>('all');
   const [show, setShow] = useState<'open' | 'all'>('open');
 
@@ -53,64 +55,64 @@ export default function PublicMap() {
   return (
     <div className="wrap">
       <div className="page-head">
-        <span className="kicker">Open data</span>
-        <h1>Public map</h1>
-        <p>Every complaint in the city, coloured by where it stands. Personal details are never shown.</p>
+        <span className="kicker">{t('map.kicker')}</span>
+        <h1>{t('map.title')}</h1>
+        <p>{t('map.help')}</p>
       </div>
 
-      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
-        <div className="filters" role="group" aria-label="Department">
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: '0.9rem' }}>
+        <div className="filters" role="group" aria-label={t('of.dept')}>
           <button type="button" aria-pressed={dept === 'all'} onClick={() => setDept('all')}>
-            All departments
+            {t('map.allDepts')}
           </button>
           {DEPARTMENTS.map((d) => (
             <button key={d.id} type="button" aria-pressed={dept === d.id} onClick={() => setDept(d.id)}>
-              {d.short}
+              {deptShort(d.id)}
             </button>
           ))}
         </div>
-        <div className="filters" role="group" aria-label="Which complaints">
+        <div className="filters" role="group" aria-label={t('map.which')}>
           <button type="button" aria-pressed={show === 'open'} onClick={() => setShow('open')}>
-            Active
+            {t('map.active')}
           </button>
           <button type="button" aria-pressed={show === 'all'} onClick={() => setShow('all')}>
-            Include closed
+            {t('map.all')}
           </button>
         </div>
       </div>
 
       <div className="map-page">
-        <div className="stack" style={{ gap: 10 }}>
+        <div className="stack" style={{ gap: '0.6rem' }}>
           <ComplaintsMap complaints={visible} now={now} />
-          <div className="legend" aria-label="Legend">
+          <div className="legend" aria-label={t('map.legend')}>
             {(Object.keys(PIN_COLORS) as PinKind[])
               .filter((k) => show === 'all' || k !== 'closed')
               .map((k) => (
                 <span key={k}>
                   <i style={{ background: PIN_COLORS[k] }} />
-                  {KIND_LABEL[k]} ({counts[k] ?? 0})
+                  {t(KIND_LABEL[k])} ({counts[k] ?? 0})
                 </span>
               ))}
           </div>
         </div>
         <aside className="panel">
           <div className="panel-title">
-            <h2>By ward</h2>
+            <h2>{t('map.byWard')}</h2>
           </div>
           <table className="data">
             <thead>
               <tr>
-                <th>Ward</th>
-                <th className="num">Open</th>
-                <th className="num">Late</th>
-                <th className="num">Fixed</th>
-                <th className="num">Avg days</th>
+                <th>{t('map.ward')}</th>
+                <th className="num">{t('map.open')}</th>
+                <th className="num">{t('map.late')}</th>
+                <th className="num">{t('map.fixed')}</th>
+                <th className="num">{t('map.days')}</th>
               </tr>
             </thead>
             <tbody>
               {wardRows.map((r) => (
                 <tr key={r.w.id}>
-                  <td>{r.w.name}</td>
+                  <td>{wardName(r.w.id)}</td>
                   <td className="num">{r.open}</td>
                   <td className="num" style={{ color: r.late ? 'var(--bad)' : undefined, fontWeight: r.late ? 700 : 400 }}>
                     {r.late}
@@ -122,7 +124,7 @@ export default function PublicMap() {
             </tbody>
           </table>
           <p className="hint" style={{ marginBottom: 0 }}>
-            Late = open and past at least one deadline.
+            {t('map.lateHelp')}
           </p>
         </aside>
       </div>

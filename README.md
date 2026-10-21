@@ -13,17 +13,18 @@
 </p>
 
 <p align="center">
-  <img alt="React 19" src="https://img.shields.io/badge/React-19-0b3b8c?logo=react&logoColor=white">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-0b3b8c?logo=typescript&logoColor=white">
-  <img alt="Vite" src="https://img.shields.io/badge/Vite-8-0b3b8c?logo=vite&logoColor=white">
-  <img alt="Leaflet + OpenStreetMap" src="https://img.shields.io/badge/Map-Leaflet%20%2B%20OSM-0b3b8c?logo=leaflet&logoColor=white">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-26%20passing-146c3c">
+  <img alt="English, Hindi, Marathi" src="https://img.shields.io/badge/languages-English%20%C2%B7%20%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80%20%C2%B7%20%E0%A4%AE%E0%A4%B0%E0%A4%BE%E0%A4%A0%E0%A5%80-1a64d6">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-1559c7?logo=react&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-1559c7?logo=typescript&logoColor=white">
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-8-1559c7?logo=vite&logoColor=white">
+  <img alt="Leaflet + OpenStreetMap" src="https://img.shields.io/badge/Map-Leaflet%20%2B%20OSM-1559c7?logo=leaflet&logoColor=white">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-31%20passing-146c3c">
   <img alt="WCAG AA contrast" src="https://img.shields.io/badge/contrast-WCAG%20AA-1450b8">
   <img alt="No server" src="https://img.shields.io/badge/backend-none%20(runs%20in%20browser)-1450b8">
 </p>
 
 **JanDrishti** (जनदृष्टि, "the people's eye") is one dashboard for complaints about any government service:
-roads, water, drainage, streetlights and garbage. Every complaint gets a **named officer** and a **visible deadline**.
+roads, water, drainage, street lights, garbage, parks and trees, public health and encroachment, in **English, हिन्दी and मराठी**. Every complaint gets a **named officer** and a **visible deadline**.
 Miss the deadline and it **moves up to that officer's senior automatically**. It only closes with a **live, on-site
 photo that hasn't been used before**, and every officer has a public score built from their actual work.
 
@@ -31,11 +32,13 @@ photo that hasn't been used before**, and every officer has a public score built
 
 Designed so a first-time smartphone user in their seventies can report a problem without help:
 
-- **A− A A+ text size** at the top of every page (remembered), 18 px body text by default, 48 px buttons.
+- **Three languages:** English, हिन्दी and मराठी, switched at the top of every page. Departments, problem types, wards, job titles, dates and durations are all translated.
+- **A− A A+ text size** at the top of every page (remembered), 17 px body text by default, 48 px buttons.
 - **Plain words:** "Report a problem", "Must be fixed by Tue, 28 Oct · 3 days left", "Moved to senior officer". No jargon, no ticking seconds.
 - **Track by number** right on the home page, and a **parcel-style progress tracker** on every complaint.
 - **High contrast** blue and white (every text colour measured at 4.5:1 or more), a strong yellow keyboard focus ring, and a light/dark switch.
-- Big department tiles, three short steps to report, and a "Common questions" section.
+- **Reporting in three steps:** pick the department from a dropdown, then the problem type, or **"Other problem"** and describe it in a few words. Then mark the place and add details.
+- Big department tiles, a light blue-and-white look, and a "Common questions" section.
 
 ## See it work
 
@@ -74,7 +77,8 @@ logged on their record. A live photo taken on site passes every check and closes
 
 | | What happens | Where it lives |
 |---|---|---|
-| **File** | Pick one of 12 problem types, drop a pin, add a photo. The pin picks the ward; the type picks the department. | [`FileComplaint.tsx`](src/pages/FileComplaint.tsx) |
+| **File** | Choose one of 8 departments, then one of 18 problem types or "Other problem" (with a short description). Drop a pin and add a photo. The pin picks the ward; the department picks the officer chain. | [`FileComplaint.tsx`](src/pages/FileComplaint.tsx), [`catalog.ts`](src/lib/catalog.ts) |
+| **Languages** | Every interface string exists in English, Hindi and Marathi; a test fails if one is missing or loses a placeholder. | [`i18n.tsx`](src/lib/i18n.tsx), [`i18n-hi.ts`](src/lib/i18n-hi.ts), [`i18n-mr.ts`](src/lib/i18n-mr.ts) |
 | **Duplicates** | Same type, still open, within 150 m? You're offered "support this instead". Supporters raise priority. | [`duplicates.ts`](src/lib/duplicates.ts) |
 | **Deadlines** | Each type has a fixed time limit (1 to 10 days), in the spirit of Maharashtra's Right to Public Services Act. | [`catalog.ts`](src/lib/catalog.ts) |
 | **Escalation** | Deadline passed → the senior officer gets it with half the original time. Repeats up to the Commissioner. Each step counts against the officer who missed it. | [`sla.ts`](src/lib/sla.ts) |
@@ -88,6 +92,10 @@ logged on their record. A live photo taken on site passes every check and closes
   <tr>
     <td width="50%"><img alt="Landing page, dark" src="docs/readme/landing-dark.jpg"></td>
     <td width="50%"><img alt="Landing page, light" src="docs/readme/landing-light.jpg"></td>
+  </tr>
+  <tr>
+    <td><img alt="Home page in Hindi" src="docs/readme/landing-hi.jpg"><br><sub><b>हिन्दी:</b> the whole site switches language from the top bar.</sub></td>
+    <td><img alt="Reporting an Other problem in Marathi" src="docs/readme/file-other-mr.jpg"><br><sub><b>मराठी:</b> department dropdown, problem types and "Other problem".</sub></td>
   </tr>
   <tr>
     <td><img alt="Complaint page with progress tracker, deadline, officer and escalation chain" src="docs/readme/complaint-light.jpg"><br><sub><b>Complaint:</b> progress tracker, deadline in plain words, who has it now and who's next.</sub></td>
@@ -126,6 +134,7 @@ Or file your own: tap anywhere in the six Pune wards on the map. **Reset demo da
   and keeps the last 4 digits; a live system would verify through UIDAI or DigiLocker.
 - **Camera:** in a browser, "live capture" means the in-app camera (`getUserMedia`). Gallery uploads are accepted
   but fail the live check. Because you're probably not standing in Pune, the proof dialog has clearly labelled demo shortcuts.
+- **Languages:** the interface is fully translated; what citizens type (descriptions, landmarks) and officer names stay as written.
 - **Later:** voice complaints in Marathi and Hindi, an AI before/after comparison, real DigiLocker sign-in, SMS and WhatsApp alerts.
   See [IDEA.md](IDEA.md).
 
@@ -151,7 +160,7 @@ design-archive/  the first design (v1, "civic signal") as one self-contained HTM
 ```bash
 npm install
 npm run dev        # http://127.0.0.1:5180
-npm test           # 26 unit tests (vitest)
+npm test           # 31 unit tests (vitest)
 npm run lint
 npm run build      # static site in dist/
 npm run snapshot   # the whole app as one HTML file that opens from disk (dist-snapshot/)

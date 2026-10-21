@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { officer } from '../lib/catalog';
-import { fmtLong, shortSpan } from '../lib/format';
+import { shortSpan } from '../lib/format';
+import { LANGS, useT } from '../lib/i18n';
 import { DAY } from '../lib/sla';
 import { useNow, useStore } from '../lib/store';
 import { Avatar, Logo } from './bits';
@@ -18,8 +19,9 @@ function remember(key: string, value: string) {
   }
 }
 
-/** Top bar: demo notice, text size and theme. Bigger text is one tap away for everyone. */
+/** Top bar: demo notice, language, text size and theme. */
 function UtilityBar() {
+  const { t, lang, setLang } = useT();
   const [size, setSize] = useState<TextSize>(() => (document.documentElement.dataset.text as TextSize) || 'md');
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme ?? 'light');
   useEffect(() => {
@@ -28,29 +30,37 @@ function UtilityBar() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
-  const sizes: [TextSize, string, string][] = [
-    ['md', 'A−', 'Normal text size'],
-    ['lg', 'A', 'Large text'],
-    ['xl', 'A+', 'Extra large text'],
+  const sizes: [TextSize, string, 'util.textMd' | 'util.textLg' | 'util.textXl'][] = [
+    ['md', 'A−', 'util.textMd'],
+    ['lg', 'A', 'util.textLg'],
+    ['xl', 'A+', 'util.textXl'],
   ];
-  const next = theme === 'dark' ? 'light' : 'dark';
+  const dark = theme === 'dark';
   return (
     <div className="utility">
       <div className="wrap">
         <p className="utility-note" style={{ margin: 0 }}>
           <Icon name="info" size={18} />
-          <span className="note-long">Demo website with sample data for Pune. Not an official government service.</span>
-          <span className="note-short">Demo site · sample data</span>
+          <span className="note-long">{t('util.demo')}</span>
+          <span className="note-short">{t('util.demoShort')}</span>
         </p>
         <div className="utility-tools">
-          <span className="text-size" role="group" aria-label="Text size">
-            {sizes.map(([s, label, name]) => (
+          <span className="lang-switch" role="group" aria-label={t('util.language')}>
+            <Icon name="globe" size={18} />
+            {LANGS.map((l) => (
+              <button key={l.id} type="button" lang={l.id} aria-pressed={lang === l.id} onClick={() => setLang(l.id)}>
+                {l.label}
+              </button>
+            ))}
+          </span>
+          <span className="text-size" role="group" aria-label={t('util.textSize')}>
+            {sizes.map(([s, label, key]) => (
               <button
                 key={s}
                 type="button"
                 aria-pressed={size === s}
-                aria-label={name}
-                title={name}
+                aria-label={t(key)}
+                title={t(key)}
                 onClick={() => {
                   setSize(s);
                   remember('jd:text', s);
@@ -63,14 +73,15 @@ function UtilityBar() {
           <button
             className="theme-btn"
             type="button"
-            aria-label={`Switch to ${next} mode`}
+            aria-label={t(dark ? 'util.toLight' : 'util.toDark')}
             onClick={() => {
+              const next = dark ? 'light' : 'dark';
               setTheme(next);
               remember('jd:theme', next);
             }}
           >
-            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
-            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            <Icon name={dark ? 'sun' : 'moon'} size={18} />
+            <span>{t(dark ? 'util.light' : 'util.dark')}</span>
           </button>
         </div>
       </div>
@@ -80,6 +91,7 @@ function UtilityBar() {
 
 function Header() {
   const { session, me, signOut } = useStore();
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   const navigate = useNavigate();
@@ -96,39 +108,39 @@ function Header() {
   return (
     <header className="site-header">
       <div className="wrap">
-        <Link to="/" className="brand" aria-label="JanDrishti home">
+        <Link to="/" className="brand" aria-label={t('brand.home')}>
           <Logo />
           <span className="brand-word">
             <b>JanDrishti</b>
             <span>
-              <span lang="hi">जनदृष्टि</span> · Public complaint portal
+              <span lang="hi">जनदृष्टि</span> · {t('brand.tagline')}
             </span>
           </span>
         </Link>
-        <nav className={`nav${open ? ' open' : ''}`} aria-label="Main">
+        <nav className={`nav${open ? ' open' : ''}`} aria-label={t('nav.main')}>
           {session?.role === 'officer' ? (
             <NavLink to="/desk">
-              <Icon name="list" size={20} /> My work
+              <Icon name="list" size={20} /> {t('nav.work')}
             </NavLink>
           ) : (
             <>
               <NavLink to="/file">
-                <Icon name="plus" size={20} /> Report a problem
+                <Icon name="plus" size={20} /> {t('nav.report')}
               </NavLink>
               <NavLink to="/my">
-                <Icon name="file" size={20} /> My complaints
+                <Icon name="file" size={20} /> {t('nav.my')}
               </NavLink>
             </>
           )}
           <NavLink to="/officers">
-            <Icon name="users" size={20} /> Officers
+            <Icon name="users" size={20} /> {t('nav.officers')}
           </NavLink>
           <NavLink to="/map">
-            <Icon name="map" size={20} /> Map
+            <Icon name="map" size={20} /> {t('nav.map')}
           </NavLink>
           {name && (
             <button className="nav-signout" type="button" onClick={out}>
-              <Icon name="logout" size={20} /> Sign out
+              <Icon name="logout" size={20} /> {t('nav.signOut')}
             </button>
           )}
         </nav>
@@ -138,15 +150,15 @@ function Header() {
               <Avatar name={name} />
               <span className="who-name">{name}</span>
               <button className="btn btn-sm" type="button" onClick={out}>
-                Sign out
+                {t('nav.signOut')}
               </button>
             </span>
           ) : (
             <Link className="btn btn-primary btn-sm" to="/login">
-              <Icon name="user" size={20} /> Sign in
+              <Icon name="user" size={20} /> {t('nav.signIn')}
             </Link>
           )}
-          <button className="icon-btn menu-btn" type="button" aria-expanded={open} aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((o) => !o)}>
+          <button className="icon-btn menu-btn" type="button" aria-expanded={open} aria-label={t(open ? 'nav.menuClose' : 'nav.menuOpen')} onClick={() => setOpen((o) => !o)}>
             <Icon name={open ? 'close' : 'menu'} />
           </button>
         </div>
@@ -157,32 +169,33 @@ function Header() {
 
 function TimeDock() {
   const { db, travel, resetClock } = useStore();
+  const { t, fmtLong } = useT();
   const now = useNow(1000);
   // Folded by default on phones so it never covers the page.
   const [folded, setFolded] = useState(() => window.matchMedia('(max-width: 600px)').matches);
   const offset = db.offsetMs;
   return (
-    <aside className={`dock${folded ? ' folded' : ''}`} aria-label="Demo clock">
-      <button className="dock-clock" type="button" onClick={() => setFolded((f) => !f)} aria-expanded={!folded} aria-label="Demo clock controls">
-        <b>Demo clock</b>
+    <aside className={`dock${folded ? ' folded' : ''}`} aria-label={t('dock.title')}>
+      <button className="dock-clock" type="button" onClick={() => setFolded((f) => !f)} aria-expanded={!folded} aria-label={t('dock.label')}>
+        <b>{t('dock.title')}</b>
         <span>{fmtLong(now)}</span>
-        {offset > 0 && <em>{shortSpan(offset)} ahead</em>}
+        {offset > 0 && <em>{t('dock.ahead', { span: shortSpan(offset) })}</em>}
       </button>
       <div className="dock-btns">
-        <button type="button" onClick={() => travel(DAY)} title="Jump 1 day ahead">
-          +1 day
+        <button type="button" onClick={() => travel(DAY)} title={t('dock.jump1')}>
+          {t('dock.plus1')}
         </button>
-        <button type="button" onClick={() => travel(3 * DAY)} title="Jump 3 days ahead">
+        <button type="button" onClick={() => travel(3 * DAY)} title={t('dock.jump3')}>
           +3
         </button>
-        <button type="button" onClick={() => travel(7 * DAY)} title="Jump 7 days ahead">
+        <button type="button" onClick={() => travel(7 * DAY)} title={t('dock.jump7')}>
           +7
         </button>
-        <button type="button" onClick={resetClock} disabled={offset === 0} title="Back to real time" aria-label="Back to real time">
+        <button type="button" onClick={resetClock} disabled={offset === 0} title={t('dock.reset')} aria-label={t('dock.reset')}>
           ⟲
         </button>
       </div>
-      <button className="dock-fold" type="button" onClick={() => setFolded((f) => !f)} aria-label={folded ? 'Show clock controls' : 'Hide clock controls'}>
+      <button className="dock-fold" type="button" onClick={() => setFolded((f) => !f)} aria-label={t(folded ? 'dock.show' : 'dock.hide')}>
         {folded ? '◂' : '▸'}
       </button>
     </aside>
@@ -191,25 +204,31 @@ function TimeDock() {
 
 function Toasts() {
   const { notices, dismiss } = useStore();
+  const { t, designation } = useT();
   return (
     <div className="toasts" role="status" aria-live="polite">
-      {notices.map((n) => (
-        <div key={n.id} className={`toast ${n.tone}`}>
-          <Icon name={n.tone === 'ok' ? 'check' : n.tone === 'warn' ? 'arrowUp' : n.tone === 'bad' ? 'alert' : 'info'} size={22} />
-          <div className="toast-body">
-            {n.text} {n.link && <Link to={n.link}>View</Link>}
+      {notices.map((n) => {
+        const o = n.vars?.officerId ? officer(String(n.vars.officerId)) : undefined;
+        const text = n.key ? t(n.key, { ...n.vars, name: o?.name ?? '', designation: o ? designation(o) : '' }) : n.text;
+        return (
+          <div key={n.id} className={`toast ${n.tone}`}>
+            <Icon name={n.tone === 'ok' ? 'check' : n.tone === 'warn' ? 'arrowUp' : n.tone === 'bad' ? 'alert' : 'info'} size={22} />
+            <div className="toast-body">
+              {text} {n.link && <Link to={n.link}>{t('toast.view')}</Link>}
+            </div>
+            <button type="button" onClick={() => dismiss(n.id)} aria-label={t('toast.dismiss')}>
+              <Icon name="close" size={18} />
+            </button>
           </div>
-          <button type="button" onClick={() => dismiss(n.id)} aria-label="Dismiss">
-            <Icon name="close" size={18} />
-          </button>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
 function Footer() {
   const { resetDemo, storageFull } = useStore();
+  const { t } = useT();
   return (
     <footer className="site-footer">
       <div className="wrap">
@@ -217,24 +236,21 @@ function Footer() {
           <h2>
             JanDrishti <span lang="hi">जनदृष्टि · जनता की नज़र</span>
           </h2>
-          <p>
-            A working prototype with fictional officers and sample data for Pune. It is not a government service, and
-            nothing you enter leaves this browser.
-          </p>
-          {storageFull && <p className="err">Browser storage is full. Reset the demo to free space.</p>}
+          <p>{t('foot.about')}</p>
+          {storageFull && <p className="err">{t('foot.full')}</p>}
         </div>
         <div className="foot-links">
-          <h3>For citizens</h3>
-          <Link to="/file">Report a problem</Link>
-          <Link to="/my">Track my complaints</Link>
-          <Link to="/map">Complaint map</Link>
+          <h3>{t('foot.citizens')}</h3>
+          <Link to="/file">{t('nav.report')}</Link>
+          <Link to="/my">{t('foot.track')}</Link>
+          <Link to="/map">{t('foot.map')}</Link>
         </div>
         <div className="foot-links">
-          <h3>Accountability</h3>
-          <Link to="/officers">Officer performance</Link>
-          <Link to="/login?as=officer">Officer sign in</Link>
+          <h3>{t('foot.account')}</h3>
+          <Link to="/officers">{t('foot.perf')}</Link>
+          <Link to="/login?as=officer">{t('foot.officerSignIn')}</Link>
           <button className="btn btn-sm" type="button" onClick={resetDemo} style={{ justifySelf: 'start', marginTop: 4 }}>
-            Reset demo data
+            {t('foot.reset')}
           </button>
         </div>
         <div dangerouslySetInnerHTML={{ __html: badgeHtml }} />
@@ -245,13 +261,14 @@ function Footer() {
 
 export default function Layout({ children }: { children: ReactNode }) {
   const loc = useLocation();
+  const { t } = useT();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [loc.pathname]);
   return (
     <>
       <a className="sr-only skip" href="#main">
-        Skip to main content
+        {t('nav.skip')}
       </a>
       <UtilityBar />
       <Header />

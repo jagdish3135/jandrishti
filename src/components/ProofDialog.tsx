@@ -1,13 +1,12 @@
 import exifr from 'exifr';
 import { useEffect, useRef, useState } from 'react';
-import { category } from '../lib/catalog';
+import { checkText, useT } from '../lib/i18n';
 import { fileToJpeg, currentPosition, hashPhoto, photoSrc, toJpeg } from '../lib/photos';
 import { allPass, knownPhotos, runChecks } from '../lib/proof';
-import { SCENE_FOR_CATEGORY, sceneSvg } from '../lib/scenes';
+import { sceneFor, sceneSvg } from '../lib/scenes';
 import { useStore } from '../lib/store';
 import type { Check, Complaint, PhotoSource } from '../lib/types';
-
-const CHECK_NAMES = { live: 'Live capture', location: 'On site', time: 'After filing', reuse: 'Never used before' };
+import { Icon } from './icons';
 
 interface Shot {
   photo: string;
@@ -19,6 +18,7 @@ interface Shot {
 
 export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () => void }) {
   const { db, now, submitProof, notify } = useStore();
+  const { t, lang } = useT();
   const dlg = useRef<HTMLDialogElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -42,7 +42,7 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
     let s: MediaStream | null = null;
     let cancelled = false;
     if (!navigator.mediaDevices?.getUserMedia) {
-      setCamError('This browser has no camera access. Use the demo options below.');
+      setCamError('noCam');
       return;
     }
     navigator.mediaDevices
@@ -53,7 +53,7 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
         setStream(ms);
         if (video.current) video.current.srcObject = ms;
       })
-      .catch(() => setCamError('Camera is blocked or not available. Allow camera access, or use the demo options below.'));
+      .catch(() => setCamError('blocked'));
     return () => {
       cancelled = true;
       s?.getTracks().forEach((t) => t.stop());
@@ -73,7 +73,7 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
     setChecks(null);
     setShown(0);
     setLogged(false);
-    setBusy('Checking photo…');
+    setBusy(t('pd.checking'));
     try {
       const hash = await hashPhoto(s.photo);
       const res = runChecks({ ...s, hash }, c, knownPhotos(db.complaints, c), now());
@@ -96,7 +96,7 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
   const capture = async () => {
     const v = video.current;
     if (!v || !v.videoWidth) return;
-    setBusy('Getting your location…');
+    setBusy(t('pd.locating'));
     const photo = toJpeg(v, 800, v.videoWidth, v.videoHeight);
     const pos = await currentPosition();
     verify({ photo, source: 'camera', takenAt: now(), lat: pos?.lat, lng: pos?.lng });
@@ -104,7 +104,7 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
 
   const upload = async (f: File | undefined) => {
     if (!f) return;
-    setBusy('Reading photo…');
+    setBusy(t('pd.reading'));
     try {
       const [photo, meta] = await Promise.all([fileToJpeg(f), exifr.parse(f, { gps: true, pick: ['DateTimeOriginal', 'latitude', 'longitude'] }).catch(() => null)]);
       const taken = meta?.DateTimeOriginal instanceof Date ? meta.DateTimeOriginal.getTime() : null;
@@ -116,7 +116,7 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
   };
 
   const demoOnSite = () => {
-    const kind = SCENE_FOR_CATEGORY[c.categoryId];
+    const kind = sceneFor(c.categoryId);
     const svg = sceneSvg(kind, c.id, true, String(Date.now()));
     const jitter = () => (Math.random() - 0.5) * 0.0006;
     verify({ photo: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), source: 'demo-camera', takenAt: now(), lat: c.lat + jitter(), lng: c.lng + jitter() });
@@ -125,7 +125,7 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
   const demoReuse = () => {
     const old =
       db.complaints.find((x) => x.proof && x.id !== c.id && x.categoryId === c.categoryId) ?? db.complaints.find((x) => x.proof && x.id !== c.id);
-    if (!old?.proof) return notify({ tone: 'info', text: 'No earlier proof photos to reuse.' });
+    if (!old?.proof) return notify({ tone: 'info', key: 'toast.noOld' });
     verify({ photo: photoSrc(old.proof.photo)!, source: 'demo-camera', takenAt: now(), lat: c.lat + 0.0002, lng: c.lng - 0.0002 });
   };
 
@@ -141,26 +141,23 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
   return (
     <dialog ref={dlg} className="modal" onClose={onClose} aria-labelledby="proof-title">
       <div className="modal-head">
-        <h2 id="proof-title">Proof of work · {c.id}</h2>
-        <button className="icon-btn" type="button" onClick={() => dlg.current?.close()} aria-label="Close">
-          ✕
+        <h2 id="proof-title">{t('pd.title', { id: c.id })}</h2>
+        <button className="icon-btn" type="button" onClick={() => dlg.current?.close()} aria-label={t('pd.close')}>
+          <Icon name="close" />
         </button>
       </div>
       <div className="modal-body">
         <p className="muted" style={{ margin: 0 }}>
-          Take a live photo of the fixed {category(c.categoryId)?.name.toLowerCase()} at the site. The case only closes if every check passes.
-          Failed attempts are logged on your record.
+          {t('pd.help')}
         </p>
 
         <div className="camera">
           {shot ? (
-            <img src={shot.photo} alt="Captured proof photo" />
+            <img src={shot.photo} alt={t('pd.captured')} />
           ) : (
             <>
-              <video ref={video} autoPlay playsInline muted aria-label="Camera preview" />
-              {!stream && (
-                <div className="camera-msg">{camError ?? 'Starting camera…'}</div>
-              )}
+              <video ref={video} autoPlay playsInline muted aria-label={t('pd.preview')} />
+              {!stream && <div className="camera-msg">{t(camError === 'noCam' ? 'pd.noCam' : camError ? 'pd.blocked' : 'pd.starting')}</div>}
             </>
           )}
           <span className="camera-frame" aria-hidden="true" />
@@ -175,36 +172,40 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
 
         {checks && (
           <ul className="checks" aria-live="polite">
-            {checks.map((k, i) => (
-              <li key={k.id}>
-                <span className={`mark ${i < shown ? (k.pass ? 'pass' : 'fail') : 'wait'}`} aria-hidden="true">
-                  {i < shown ? (k.pass ? '✓' : '✕') : ''}
-                </span>
-                <span>
-                  <b>{CHECK_NAMES[k.id]}</b>
-                  <span className="muted">{i < shown ? k.detail : 'Checking…'}</span>
-                </span>
-              </li>
-            ))}
+            {checks.map((k, i) => {
+              const text = checkText(k, t, lang);
+              const ready = i < shown;
+              return (
+                <li key={k.id}>
+                  <span className={`mark ${ready ? (k.pass ? 'pass' : 'fail') : 'wait'}`} aria-hidden="true">
+                    {ready && <Icon name={k.pass ? 'check' : 'close'} />}
+                  </span>
+                  <span>
+                    <b>{ready ? text.title : t(`ck.${k.id}`)}</b>
+                    <span className="muted">{ready ? text.detail : t('pd.checkingShort')}</span>
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
 
         {done && !passed && logged && (
-          <p className="callout bad" style={{ margin: 0 }}>
-            <span aria-hidden="true">✕</span>
-            <span>Rejected. The case stays open and this attempt is logged on your record. Retake the photo at the site.</span>
-          </p>
+          <div className="callout bad">
+            <Icon name="alert" />
+            <span>{t('pd.rejected')}</span>
+          </div>
         )}
 
         <div className="row">
           {!shot && (
             <>
               <button className="btn btn-primary" type="button" onClick={capture} disabled={!stream || !!busy}>
-                ◉ Take photo
+                <Icon name="camera" /> {t('pd.take')}
               </button>
               <label className="btn">
                 <input type="file" accept="image/*" className="sr-only" onChange={(e) => upload(e.target.files?.[0])} />
-                Upload from gallery
+                {t('pd.gallery')}
               </label>
             </>
           )}
@@ -214,29 +215,29 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
               type="button"
               onClick={() => {
                 submitProof(c.id, { photo: shot.photo, hash: hashRef.current, takenAt: shot.takenAt ?? now(), lat: shot.lat, lng: shot.lng, source: shot.source, checks: checks! });
-                notify({ tone: 'ok', text: `${c.id} marked fixed. The citizen has been asked to confirm.` });
+                notify({ tone: 'ok', key: 'toast.resolved', vars: { id: c.id } });
                 dlg.current?.close();
               }}
             >
-              ✓ Mark as resolved
+              <Icon name="check" /> {t('pd.mark')}
             </button>
           )}
           {shot && done && (
             <button className="btn" type="button" onClick={retake}>
-              Retake
+              {t('pd.retake')}
             </button>
           )}
         </div>
 
         {!shot && (
           <div className="demo-tools">
-            <span className="kicker">Demo shortcuts (you're not really in Pune)</span>
+            <span className="kicker">{t('pd.demoTitle')}</span>
             <div className="row">
               <button className="btn btn-sm" type="button" onClick={demoOnSite} disabled={!!busy}>
-                Simulate a live photo on site
+                {t('pd.demoLive')}
               </button>
               <button className="btn btn-sm btn-danger" type="button" onClick={demoReuse} disabled={!!busy}>
-                Try to cheat with an old proof photo
+                {t('pd.demoCheat')}
               </button>
             </div>
           </div>
