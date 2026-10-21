@@ -27,16 +27,16 @@ Photos: before/after "evidence plates" for seed data are generated SVG scenes; u
 src/lib (pure, tested): verhoeff, geo, sla+escalation, scoring, dhash, duplicates, store. src/pages, src/components.
 
 ## Tasks
-- [ ] 1. Scaffold, design tokens, theme toggle, shell (header, footer + Knit badge), seed data + store, landing page (US-4 base)
-- [ ] 2. Logic + unit tests: verhoeff, geo, SLA/escalation, scoring, dHash, duplicates (US-1,3,5,6,8)
-- [ ] 3. Sign-in flows (US-1)
-- [ ] 4. File complaint with map pin, photo, duplicate check (US-2,3)
-- [ ] 5. My complaints + complaint detail: timeline, officer, countdown, ladder; time-travel dock (US-4,5)
-- [ ] 6. Officer workspace + proof capture and checks (US-6)
-- [ ] 7. Confirm/reopen + rating (US-7)
-- [ ] 8. Officer directory, leaderboard, profile (US-8)
-- [ ] 9. Public map + ward stats (US-9)
-- [ ] 10. Check pass, README with media, deploy on approval
+- [x] 1. Scaffold, design tokens, theme toggle, shell (header, footer + Knit badge), seed data + store, landing page (US-4 base)
+- [x] 2. Logic + unit tests: verhoeff, geo, SLA/escalation, scoring, dHash, duplicates (US-1,3,5,6,8)
+- [x] 3. Sign-in flows (US-1)
+- [x] 4. File complaint with map pin, photo, duplicate check (US-2,3)
+- [x] 5. My complaints + complaint detail: timeline, officer, countdown, ladder; time-travel dock (US-4,5)
+- [x] 6. Officer workspace + proof capture and checks (US-6)
+- [x] 7. Confirm/reopen + rating (US-7)
+- [x] 8. Officer directory, leaderboard, profile (US-8)
+- [x] 9. Public map + ward stats (US-9)
+- [ ] 10. Check pass, README with media, deploy on approval (check + README done; deploy waits for approval)
 
 ## Decisions
 - User: v1 extras = public map + duplicate merging; data in browser (demo); Vercel; solo mode; UI via frontend-design.

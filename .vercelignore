@@ -1,0 +1,5 @@
+docs/
+.knit/
+graphify-out/
+node_modules/
+.claude/
