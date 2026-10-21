@@ -6,7 +6,7 @@
 </picture>
 
 <p align="center">
-  <a href="https://jandrishti.vercel.app"><b>Live demo</b></a> ·
+  <a href="https://jandrishti-app.vercel.app"><b>Live demo</b></a> ·
   <a href="#try-it-in-60-seconds">Try it in 60 seconds</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#run-it-locally">Run locally</a>
@@ -107,7 +107,7 @@ logged on their record. A live photo taken on site passes every check and closes
 
 ## Try it in 60 seconds
 
-1. Open the [live demo](https://jandrishti.vercel.app), or type **JD-26-00001** in "Track your complaint".
+1. Open the [live demo](https://jandrishti-app.vercel.app), or type **JD-26-00001** in "Track your complaint".
 2. Press **Sign in → Continue as Priya Deshmukh** and open her **Pothole** complaint (due soon). Press **+1 day** on the demo clock at the bottom right and watch it move to the senior officer.
 3. **Sign out**, sign in as **Officer → Amit Deshpande** (or whoever owns it now) and press **Upload proof and resolve**.
 4. Try **"cheat with an old proof photo"** (rejected), then **"simulate a live photo on site"** (passes).
