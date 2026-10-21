@@ -22,10 +22,10 @@ export default function Officers() {
     <div className="wrap">
       <div className="page-head">
         <span className="kicker">Public record</span>
-        <h1>Officer scores</h1>
+        <h1>Officer performance</h1>
         <p>
-          Scores come from the work itself: fixed before the deadline (40%), proof photos that passed (20%), citizen ratings of
-          resolved cases (25%), and staying free of escalations and reopened cases (15%).
+          Every officer's score out of 100 comes from their actual work: fixing problems before the deadline (40%),
+          sending genuine proof photos (20%), ratings from citizens (25%) and not missing deadlines (15%).
         </p>
       </div>
 
@@ -51,10 +51,10 @@ export default function Officers() {
                 {o.designation}
               </span>
               <span className="ofc-sub" style={{ display: 'block' }}>
-                {s.resolved} fixed · {s.onTime} on time · {s.escalations} escalations · {s.ratingAvg ? `★ ${s.ratingAvg.toFixed(1)}` : 'no ratings'}
+                {s.resolved} fixed · {s.onTime} on time · {s.escalations} missed deadline{s.escalations === 1 ? '' : 's'} · {s.ratingAvg ? `★ ${s.ratingAvg.toFixed(1)}` : 'no ratings yet'}
               </span>
             </span>
-            <span className="ofc-score">
+            <span className="ofc-score" aria-label={`Score ${s.score} of 100, grade ${s.grade}`}>
               {s.score}
               <span className={`grade ${s.grade}`}>{s.grade}</span>
             </span>

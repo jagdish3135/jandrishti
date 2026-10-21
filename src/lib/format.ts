@@ -40,3 +40,15 @@ export function maskName(name: string) {
   const [first, ...rest] = name.split(' ');
   return rest.length ? `${first} ${rest.map((r) => r[0] + '.').join(' ')}` : first;
 }
+
+const longDate = new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+export const fmtLong = (t: number) => longDate.format(t);
+
+/** "6 days 23 hours", "5 hours 10 minutes", "12 minutes": plain words, no seconds. */
+export function humanSpan(ms: number) {
+  const { d, h, m } = parts(ms);
+  const w = (n: number, s: string) => `${n} ${s}${n === 1 ? '' : 's'}`;
+  if (d > 0) return h ? `${w(d, 'day')} ${w(h, 'hour')}` : w(d, 'day');
+  if (h > 0) return m ? `${w(h, 'hour')} ${w(m, 'minute')}` : w(h, 'hour');
+  return w(Math.max(1, m), 'minute');
+}

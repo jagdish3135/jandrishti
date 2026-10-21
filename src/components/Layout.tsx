@@ -1,46 +1,80 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { officer } from '../lib/catalog';
-import { fmtClock, shortSpan } from '../lib/format';
+import { fmtLong, shortSpan } from '../lib/format';
 import { DAY } from '../lib/sla';
 import { useNow, useStore } from '../lib/store';
 import { Avatar, Logo } from './bits';
+import { Icon } from './icons';
 import badgeHtml from './knit-badge.html?raw';
 
-function ThemeToggle() {
+type TextSize = 'md' | 'lg' | 'xl';
+
+function remember(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // The setting still applies for this visit.
+  }
+}
+
+/** Top bar: demo notice, text size and theme. Bigger text is one tap away for everyone. */
+function UtilityBar() {
+  const [size, setSize] = useState<TextSize>(() => (document.documentElement.dataset.text as TextSize) || 'md');
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme ?? 'light');
+  useEffect(() => {
+    document.documentElement.dataset.text = size;
+  }, [size]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+  const sizes: [TextSize, string, string][] = [
+    ['md', 'A−', 'Normal text size'],
+    ['lg', 'A', 'Large text'],
+    ['xl', 'A+', 'Extra large text'],
+  ];
   const next = theme === 'dark' ? 'light' : 'dark';
   return (
-    <button
-      className="icon-btn"
-      type="button"
-      aria-label={`Switch to ${next} theme`}
-      title={`Switch to ${next} theme`}
-      onClick={() => {
-        setTheme(next);
-        try {
-          localStorage.setItem('jd:theme', next);
-        } catch {
-          // Theme still switches for this visit.
-        }
-      }}
-    >
-      {theme === 'dark' ? (
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="5" fill="currentColor" />
-          <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
-          </g>
-        </svg>
-      ) : (
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M21 13.2A9 9 0 1 1 10.8 3a7 7 0 0 0 10.2 10.2z" fill="currentColor" />
-        </svg>
-      )}
-    </button>
+    <div className="utility">
+      <div className="wrap">
+        <p className="utility-note" style={{ margin: 0 }}>
+          <Icon name="info" size={18} />
+          <span className="note-long">Demo website with sample data for Pune. Not an official government service.</span>
+          <span className="note-short">Demo site · sample data</span>
+        </p>
+        <div className="utility-tools">
+          <span className="text-size" role="group" aria-label="Text size">
+            {sizes.map(([s, label, name]) => (
+              <button
+                key={s}
+                type="button"
+                aria-pressed={size === s}
+                aria-label={name}
+                title={name}
+                onClick={() => {
+                  setSize(s);
+                  remember('jd:text', s);
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </span>
+          <button
+            className="theme-btn"
+            type="button"
+            aria-label={`Switch to ${next} mode`}
+            onClick={() => {
+              setTheme(next);
+              remember('jd:theme', next);
+            }}
+          >
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
+            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -54,6 +88,10 @@ function Header() {
   }, [loc.pathname]);
   const ofc = session?.role === 'officer' ? officer(session.officerId) : undefined;
   const name = me?.name ?? ofc?.name;
+  const out = () => {
+    signOut();
+    navigate('/');
+  };
 
   return (
     <header className="site-header">
@@ -62,65 +100,54 @@ function Header() {
           <Logo />
           <span className="brand-word">
             <b>JanDrishti</b>
-            <span lang="hi">जनदृष्टि</span>
+            <span>
+              <span lang="hi">जनदृष्टि</span> · Public complaint portal
+            </span>
           </span>
         </Link>
         <nav className={`nav${open ? ' open' : ''}`} aria-label="Main">
           {session?.role === 'officer' ? (
-            <NavLink to="/desk">My desk</NavLink>
+            <NavLink to="/desk">
+              <Icon name="list" size={20} /> My work
+            </NavLink>
           ) : (
             <>
-              <NavLink to="/file">File complaint</NavLink>
-              <NavLink to="/my">My complaints</NavLink>
+              <NavLink to="/file">
+                <Icon name="plus" size={20} /> Report a problem
+              </NavLink>
+              <NavLink to="/my">
+                <Icon name="file" size={20} /> My complaints
+              </NavLink>
             </>
           )}
-          <NavLink to="/officers">Officers</NavLink>
-          <NavLink to="/map">Map</NavLink>
+          <NavLink to="/officers">
+            <Icon name="users" size={20} /> Officers
+          </NavLink>
+          <NavLink to="/map">
+            <Icon name="map" size={20} /> Map
+          </NavLink>
           {name && (
-            <button
-              className="nav-signout"
-              type="button"
-              onClick={() => {
-                signOut();
-                navigate('/');
-              }}
-            >
-              Sign out
+            <button className="nav-signout" type="button" onClick={out}>
+              <Icon name="logout" size={20} /> Sign out
             </button>
           )}
         </nav>
         <div className="header-tools">
-          <ThemeToggle />
           {name ? (
             <span className="who">
               <Avatar name={name} />
               <span className="who-name">{name}</span>
-              <button
-                className="btn btn-sm"
-                type="button"
-                onClick={() => {
-                  signOut();
-                  navigate('/');
-                }}
-              >
+              <button className="btn btn-sm" type="button" onClick={out}>
                 Sign out
               </button>
             </span>
           ) : (
             <Link className="btn btn-primary btn-sm" to="/login">
-              Sign in
+              <Icon name="user" size={20} /> Sign in
             </Link>
           )}
-          <button
-            className="icon-btn menu-btn"
-            type="button"
-            aria-expanded={open}
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            onClick={() => setOpen((o) => !o)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-              <path d={open ? 'M5 5l14 14M19 5L5 19' : 'M3 6h18M3 12h18M3 18h18'} stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-            </svg>
+          <button className="icon-btn menu-btn" type="button" aria-expanded={open} aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((o) => !o)}>
+            <Icon name={open ? 'close' : 'menu'} />
           </button>
         </div>
       </div>
@@ -131,26 +158,27 @@ function Header() {
 function TimeDock() {
   const { db, travel, resetClock } = useStore();
   const now = useNow(1000);
-  const [folded, setFolded] = useState(false);
+  // Folded by default on phones so it never covers the page.
+  const [folded, setFolded] = useState(() => window.matchMedia('(max-width: 600px)').matches);
   const offset = db.offsetMs;
   return (
     <aside className={`dock${folded ? ' folded' : ''}`} aria-label="Demo clock">
-      <div className="dock-clock" aria-live="polite">
-        <b>DEMO CLOCK</b>
-        <span>{fmtClock(now)}</span>
-        {offset > 0 && <em>+{shortSpan(offset)} ahead</em>}
-      </div>
+      <button className="dock-clock" type="button" onClick={() => setFolded((f) => !f)} aria-expanded={!folded} aria-label="Demo clock controls">
+        <b>Demo clock</b>
+        <span>{fmtLong(now)}</span>
+        {offset > 0 && <em>{shortSpan(offset)} ahead</em>}
+      </button>
       <div className="dock-btns">
         <button type="button" onClick={() => travel(DAY)} title="Jump 1 day ahead">
-          +1d
+          +1 day
         </button>
         <button type="button" onClick={() => travel(3 * DAY)} title="Jump 3 days ahead">
-          +3d
+          +3
         </button>
         <button type="button" onClick={() => travel(7 * DAY)} title="Jump 7 days ahead">
-          +7d
+          +7
         </button>
-        <button type="button" onClick={resetClock} disabled={offset === 0} aria-label="Back to real time" title="Back to real time">
+        <button type="button" onClick={resetClock} disabled={offset === 0} title="Back to real time" aria-label="Back to real time">
           ⟲
         </button>
       </div>
@@ -167,12 +195,12 @@ function Toasts() {
     <div className="toasts" role="status" aria-live="polite">
       {notices.map((n) => (
         <div key={n.id} className={`toast ${n.tone}`}>
-          <span className="toast-bar" />
+          <Icon name={n.tone === 'ok' ? 'check' : n.tone === 'warn' ? 'arrowUp' : n.tone === 'bad' ? 'alert' : 'info'} size={22} />
           <div className="toast-body">
-            {n.text} {n.link && <Link to={n.link}>Open</Link>}
+            {n.text} {n.link && <Link to={n.link}>View</Link>}
           </div>
           <button type="button" onClick={() => dismiss(n.id)} aria-label="Dismiss">
-            ×
+            <Icon name="close" size={18} />
           </button>
         </div>
       ))}
@@ -190,15 +218,22 @@ function Footer() {
             JanDrishti <span lang="hi">जनदृष्टि · जनता की नज़र</span>
           </h2>
           <p>
-            A working prototype with fictional officers and sample data for {''}
-            Pune. It is not a government service, and nothing you enter leaves this browser.
+            A working prototype with fictional officers and sample data for Pune. It is not a government service, and
+            nothing you enter leaves this browser.
           </p>
           {storageFull && <p className="err">Browser storage is full. Reset the demo to free space.</p>}
         </div>
         <div className="foot-links">
-          <Link to="/officers">Officer scores</Link>
-          <Link to="/map">Public map</Link>
-          <button className="btn btn-sm" type="button" onClick={resetDemo} style={{ justifySelf: 'start' }}>
+          <h3>For citizens</h3>
+          <Link to="/file">Report a problem</Link>
+          <Link to="/my">Track my complaints</Link>
+          <Link to="/map">Complaint map</Link>
+        </div>
+        <div className="foot-links">
+          <h3>Accountability</h3>
+          <Link to="/officers">Officer performance</Link>
+          <Link to="/login?as=officer">Officer sign in</Link>
+          <button className="btn btn-sm" type="button" onClick={resetDemo} style={{ justifySelf: 'start', marginTop: 4 }}>
             Reset demo data
           </button>
         </div>
@@ -216,8 +251,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <>
       <a className="sr-only skip" href="#main">
-        Skip to content
+        Skip to main content
       </a>
+      <UtilityBar />
       <Header />
       <Toasts />
       <main id="main">{children}</main>

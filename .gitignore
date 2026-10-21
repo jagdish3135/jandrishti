@@ -6,3 +6,4 @@ dist/
 graphify-out/
 *.log
 .claude/
+dist-snapshot/

@@ -66,12 +66,12 @@ function CitizenSignIn({ onDone }: { onDone: () => void }) {
       {step === 'phone' && (
         <form className="stack" style={{ gap: 14 }} onSubmit={sendOtp} noValidate>
           <label className="field">
-            <span>Mobile number</span>
+            <span>Your mobile number</span>
             <input className="input big" inputMode="tel" autoComplete="tel" placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} aria-invalid={!!error} />
           </label>
           {error && <p className="err" role="alert">{error}</p>}
           <button className="btn btn-primary" type="submit">
-            Send OTP
+            Send me a code
           </button>
         </form>
       )}
@@ -79,12 +79,12 @@ function CitizenSignIn({ onDone }: { onDone: () => void }) {
       {step === 'otp' && (
         <form className="stack" style={{ gap: 14 }} onSubmit={checkOtp} noValidate>
           <div className="otp-sms" role="status">
-            <span className="label">Demo SMS to +91 {cleanPhone(phone)}</span>
+            <span className="label">Demo text message to +91 {cleanPhone(phone)}</span>
             <span>Your JanDrishti code is</span>
             <b>{sent}</b>
           </div>
           <label className="field">
-            <span>Enter the 6-digit code</span>
+            <span>Type the 6-digit code from the message</span>
             <input className="input big" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} autoFocus aria-invalid={!!error} />
           </label>
           {error && <p className="err" role="alert">{error}</p>}
@@ -113,7 +113,7 @@ function CitizenSignIn({ onDone }: { onDone: () => void }) {
             </label>
           )}
           <label className="field">
-            <span>Aadhaar number</span>
+            <span>Your 12-digit Aadhaar number</span>
             <input className="input big" inputMode="numeric" autoComplete="off" placeholder="XXXX XXXX XXXX" value={aadhaar} onChange={(e) => setAadhaar(formatAadhaar(e.target.value))} aria-invalid={!!error} aria-describedby="aadhaar-hint" />
           </label>
           <p id="aadhaar-hint" className="hint">
@@ -148,15 +148,15 @@ export default function Login() {
     <div className="wrap">
       <div className="page-head">
         <span className="kicker">Sign in</span>
-        <h1>Who's reporting?</h1>
-        <p>Citizens sign in with their mobile number and Aadhaar so every complaint comes from a real, verified person.</p>
+        <h1>Sign in to JanDrishti</h1>
+        <p>Citizens sign in with their mobile number and Aadhaar. This makes sure every complaint comes from a real person.</p>
       </div>
       <div className="tabs" role="tablist" aria-label="Sign in as">
         <button role="tab" aria-selected={as === 'citizen'} onClick={() => setAs('citizen')} type="button">
-          Citizen
+          I am a citizen
         </button>
         <button role="tab" aria-selected={as === 'officer'} onClick={() => setAs('officer')} type="button">
-          Officer
+          I am an officer
         </button>
       </div>
 
@@ -167,8 +167,8 @@ export default function Login() {
           </div>
           {priya && (
             <div className="choice">
-              <span className="kicker">Quick demo</span>
-              <h2 style={{ fontSize: 34 }}>Try as Priya</h2>
+              <span className="kicker">Just looking?</span>
+              <h2>Try the demo as Priya</h2>
               <p className="muted" style={{ margin: 0 }}>
                 A sample citizen in Kothrud with five complaints: one due soon, one escalated, one waiting for her
                 confirmation, and two closed.
@@ -220,7 +220,7 @@ export default function Login() {
             </select>
           </label>
           <p className="hint" style={{ margin: 0 }}>
-            Demo: pick any sample officer. A live system would use the government's staff sign-in.
+            Demo: choose any sample officer. A real system would use the government's staff sign-in.
           </p>
           <button className="btn btn-primary" type="submit" style={{ justifySelf: 'start' }}>
             Open officer desk

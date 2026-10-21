@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/banner-dark.svg">
-  <img alt="JanDrishti: every complaint gets a name, a deadline and a boss" src="docs/readme/banner-light.svg" width="100%">
+  <img alt="JanDrishti: report a civic problem, know who will fix it, and by when" src="docs/readme/banner-light.svg" width="100%">
 </picture>
 
 <p align="center">
@@ -13,18 +13,29 @@
 </p>
 
 <p align="center">
-  <img alt="React 19" src="https://img.shields.io/badge/React-19-17191c?logo=react&logoColor=ffc21a">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-17191c?logo=typescript&logoColor=ffc21a">
-  <img alt="Vite" src="https://img.shields.io/badge/Vite-8-17191c?logo=vite&logoColor=ffc21a">
-  <img alt="Leaflet + OpenStreetMap" src="https://img.shields.io/badge/Map-Leaflet%20%2B%20OSM-17191c?logo=leaflet&logoColor=ffc21a">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-26%20passing-1b7a46">
-  <img alt="No server" src="https://img.shields.io/badge/backend-none%20(runs%20in%20browser)-ffc21a?labelColor=17191c">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-0b3b8c?logo=react&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-0b3b8c?logo=typescript&logoColor=white">
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-8-0b3b8c?logo=vite&logoColor=white">
+  <img alt="Leaflet + OpenStreetMap" src="https://img.shields.io/badge/Map-Leaflet%20%2B%20OSM-0b3b8c?logo=leaflet&logoColor=white">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-26%20passing-146c3c">
+  <img alt="WCAG AA contrast" src="https://img.shields.io/badge/contrast-WCAG%20AA-1450b8">
+  <img alt="No server" src="https://img.shields.io/badge/backend-none%20(runs%20in%20browser)-1450b8">
 </p>
 
 **JanDrishti** (जनदृष्टि, "the people's eye") is one dashboard for complaints about any government service:
 roads, water, drainage, streetlights and garbage. Every complaint gets a **named officer** and a **visible deadline**.
 Miss the deadline and it **moves up to that officer's senior automatically**. It only closes with a **live, on-site
 photo that hasn't been used before**, and every officer has a public score built from their actual work.
+
+## Made for every citizen
+
+Designed so a first-time smartphone user in their seventies can report a problem without help:
+
+- **A− A A+ text size** at the top of every page (remembered), 18 px body text by default, 48 px buttons.
+- **Plain words:** "Report a problem", "Must be fixed by Tue, 28 Oct · 3 days left", "Moved to senior officer". No jargon, no ticking seconds.
+- **Track by number** right on the home page, and a **parcel-style progress tracker** on every complaint.
+- **High contrast** blue and white (every text colour measured at 4.5:1 or more), a strong yellow keyboard focus ring, and a light/dark switch.
+- Big department tiles, three short steps to report, and a "Common questions" section.
 
 ## See it work
 
@@ -79,16 +90,16 @@ logged on their record. A live photo taken on site passes every check and closes
     <td width="50%"><img alt="Landing page, light" src="docs/readme/landing-light.jpg"></td>
   </tr>
   <tr>
-    <td><img alt="Complaint page with countdown, officer and escalation chain" src="docs/readme/complaint-dark.jpg"><br><sub><b>Complaint:</b> live countdown, who owns it, who's next.</sub></td>
-    <td><img alt="Filing a complaint with a duplicate found nearby" src="docs/readme/file-duplicate.jpg"><br><sub><b>Filing:</b> routing preview and a duplicate 122 m away.</sub></td>
+    <td><img alt="Complaint page with progress tracker, deadline, officer and escalation chain" src="docs/readme/complaint-light.jpg"><br><sub><b>Complaint:</b> progress tracker, deadline in plain words, who has it now and who's next.</sub></td>
+    <td><img alt="Reporting a problem with a duplicate found nearby" src="docs/readme/file-duplicate.jpg"><br><sub><b>Reporting:</b> who will handle it, the deadline, and a duplicate 133 m away.</sub></td>
   </tr>
   <tr>
     <td><img alt="Proof dialog rejecting a reused photo" src="docs/readme/proof-rejected.jpg"><br><sub><b>Proof:</b> a reused photo is caught (distance 0/64).</sub></td>
-    <td><img alt="Officer profile with score dial and verified work" src="docs/readme/officer-dark.jpg"><br><sub><b>Officer profile:</b> score, record and verified work.</sub></td>
+    <td><img alt="Officer profile with score dial and verified work" src="docs/readme/officer-light.jpg"><br><sub><b>Officer profile:</b> score, record and verified work.</sub></td>
   </tr>
   <tr>
-    <td><img alt="Public map, dark" src="docs/readme/map-dark.jpg"><br><sub><b>Public map:</b> every complaint by status, ward table.</sub></td>
-    <td><img alt="Public map, light" src="docs/readme/map-light.jpg"><br><sub>Light and dark themes, with a toggle.</sub></td>
+    <td><img alt="Public map" src="docs/readme/map-light.jpg"><br><sub><b>Map:</b> every complaint by status, with a ward table.</sub></td>
+    <td><img alt="Complaint page in dark mode" src="docs/readme/complaint-dark.jpg"><br><sub>Dark mode, one tap away in the top bar.</sub></td>
   </tr>
 </table>
 
@@ -96,8 +107,8 @@ logged on their record. A live photo taken on site passes every check and closes
 
 ## Try it in 60 seconds
 
-1. Open the [live demo](https://jandrishti.vercel.app) and press **Sign in → Continue as Priya Deshmukh**.
-2. Open her **Pothole** complaint (due soon). Press **+1d** on the demo clock at the bottom right and watch it escalate.
+1. Open the [live demo](https://jandrishti.vercel.app), or type **JD-26-00001** in "Track your complaint".
+2. Press **Sign in → Continue as Priya Deshmukh** and open her **Pothole** complaint (due soon). Press **+1 day** on the demo clock at the bottom right and watch it move to the senior officer.
 3. **Sign out**, sign in as **Officer → Amit Deshpande** (or whoever owns it now) and press **Upload proof and resolve**.
 4. Try **"cheat with an old proof photo"** (rejected), then **"simulate a live photo on site"** (passes).
 5. Back as Priya: confirm the fix and rate it. The officer's score updates on **Officers**.
@@ -130,6 +141,7 @@ src/
   components/    layout, map, proof dialog, shared bits
   pages/         landing, login, file, my complaints, complaint, officer desk, officers, officer profile, map
 docs/readme/     README media and the scripts that make it (capture.mjs, make-svgs.mjs)
+design-archive/  the first design (v1, "civic signal") as one self-contained HTML file
 ```
 
 </details>
@@ -142,6 +154,7 @@ npm run dev        # http://127.0.0.1:5180
 npm test           # 26 unit tests (vitest)
 npm run lint
 npm run build      # static site in dist/
+npm run snapshot   # the whole app as one HTML file that opens from disk (dist-snapshot/)
 ```
 
 Regenerate the README media (needs `ffmpeg`): `npm run build && npm run preview`, then

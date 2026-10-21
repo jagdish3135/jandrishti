@@ -159,9 +159,7 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
             <>
               <video ref={video} autoPlay playsInline muted aria-label="Camera preview" />
               {!stream && (
-                <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#c9c6bb', padding: 20, textAlign: 'center' }}>
-                  {camError ?? 'Starting camera…'}
-                </div>
+                <div className="camera-msg">{camError ?? 'Starting camera…'}</div>
               )}
             </>
           )}

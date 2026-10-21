@@ -82,7 +82,7 @@ if (ONLY.includes('shots')) {
 
   // Filing: duplicate check with the routing preview.
   {
-    const ctx = await context('dark');
+    const ctx = await context('light');
     const page = await ctx.newPage();
     await asPriya(page, '/my');
     // Sign in as a neighbour instead, so the duplicate is someone else's complaint.
@@ -107,7 +107,7 @@ if (ONLY.includes('shots')) {
 
   // Proof dialog: a reused photo is caught.
   {
-    const ctx = await context('dark', { width: 1280, height: 900 });
+    const ctx = await context('light', { width: 1280, height: 900 });
     const page = await ctx.newPage();
     await asOfficer(page, 'roads-je-west', '/complaints/JD-26-00001');
     await page.getByRole('button', { name: 'Upload proof and resolve' }).click();
@@ -120,7 +120,7 @@ if (ONLY.includes('shots')) {
 
   // Phone.
   {
-    const ctx = await context('dark', { width: 390, height: 844 }, { isMobile: true, hasTouch: true, deviceScaleFactor: 3 });
+    const ctx = await context('light', { width: 390, height: 844 }, { isMobile: true, hasTouch: true, deviceScaleFactor: 3 });
     const page = await ctx.newPage();
     await asPriya(page, '/complaints/JD-26-00001');
     await shot(page, 'mobile-complaint');
@@ -132,8 +132,8 @@ if (ONLY.includes('shots')) {
 async function record(name, seconds, run, size = { width: 1280, height: 800 }) {
   const tmp = join(here, '.tmp-video');
   rmSync(tmp, { recursive: true, force: true });
-  const ctx = await browser.newContext({ viewport: size, recordVideo: { dir: tmp, size }, colorScheme: 'dark', reducedMotion: 'no-preference' });
-  await ctx.addInitScript(() => localStorage.setItem('jd:theme', 'dark'));
+  const ctx = await browser.newContext({ viewport: size, recordVideo: { dir: tmp, size }, colorScheme: 'light', reducedMotion: 'no-preference' });
+  await ctx.addInitScript(() => localStorage.setItem('jd:theme', 'light'));
   const page = await ctx.newPage();
   const startAt = await run(page);
   await ctx.close();

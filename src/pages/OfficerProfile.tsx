@@ -15,13 +15,12 @@ function Dial({ score, grade }: { score: number; grade: string }) {
   return (
     <div className="dial" role="img" aria-label={`Score ${score} out of 100, grade ${grade}`}>
       <svg viewBox="0 0 168 168">
-        <circle cx="84" cy="84" r={r} fill="none" stroke="var(--paper-2)" strokeWidth="16" />
-        <circle cx="84" cy="84" r={r} fill="none" stroke="var(--hazard)" strokeWidth="16" strokeDasharray={`${(score / 100) * len} ${len}`} />
-        <circle cx="84" cy="84" r={r + 9} fill="none" stroke="var(--ink)" strokeWidth="2" />
+        <circle cx="84" cy="84" r={r} fill="none" stroke="var(--tint)" strokeWidth="16" />
+        <circle cx="84" cy="84" r={r} fill="none" stroke="var(--blue-2)" strokeWidth="16" strokeLinecap="round" strokeDasharray={`${(score / 100) * len} ${len}`} />
       </svg>
       <div className="dial-num">
         <b>{score}</b>
-        <span>GRADE {grade}</span>
+        <span>out of 100 · grade {grade}</span>
       </div>
     </div>
   );
@@ -49,7 +48,7 @@ export default function OfficerProfile() {
     <div className="wrap">
       <div className="page-head">
         <Link to="/officers" className="kicker" style={{ textDecoration: 'none' }}>
-          ← Officer scores
+          ← All officers
         </Link>
         <div className="row" style={{ gap: 28, marginTop: 18, alignItems: 'center' }}>
           <Avatar name={o.name} lg />
@@ -78,7 +77,7 @@ export default function OfficerProfile() {
         </div>
         <div>
           <b style={{ color: s.escalations ? 'var(--bad)' : undefined }}>{s.escalations}</b>
-          <span>Missed deadlines (escalated)</span>
+          <span>Missed deadlines</span>
         </div>
         <div>
           <b style={{ color: s.proofFails ? 'var(--bad)' : undefined }}>{s.proofFails}</b>

@@ -63,7 +63,7 @@ export function ComplaintsMap({ complaints, now, fit = true }: { complaints: Com
       {complaints.map((c) => (
         <Marker key={c.id} position={[c.lat, c.lng]} icon={icon(PIN_COLORS[pinKind(c, now)])} title={`${c.id}: ${category(c.categoryId)?.name}`}>
           <Popup>
-            <div className="mono" style={{ fontSize: 12 }}>
+            <div className="mono" style={{ fontSize: '0.85rem' }}>
               {c.id}
             </div>
             <strong>{category(c.categoryId)?.name}</strong>
@@ -71,8 +71,8 @@ export function ComplaintsMap({ complaints, now, fit = true }: { complaints: Com
               {ward(c.wardId)?.name}
               {c.landmark ? ` · ${c.landmark}` : ''}
             </div>
-            <div>With {officer(c.officerId)?.name}</div>
-            <Link to={`/complaints/${c.id}`}>Open complaint →</Link>
+            <div>Officer: {officer(c.officerId)?.name}</div>
+            <Link to={`/complaints/${c.id}`}>See details →</Link>
           </Popup>
         </Marker>
       ))}

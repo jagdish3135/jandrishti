@@ -19,21 +19,21 @@ function Loading() {
   return (
     <div className="wrap page-head" role="status">
       <span className="kicker">Loading…</span>
-      <div className="hazard-tape" style={{ height: 8, width: 160, marginTop: 14, borderRadius: 4 }} />
+      <p className="muted">Please wait a moment.</p>
     </div>
   );
 }
 
 const TITLES: [RegExp, string][] = [
-  [/^\/$/, 'JanDrishti · Every complaint gets a deadline'],
+  [/^\/$/, 'JanDrishti · Report a civic problem and track it'],
   [/^\/login.*$/, 'Sign in · JanDrishti'],
-  [/^\/file.*$/, 'File a complaint · JanDrishti'],
+  [/^\/file.*$/, 'Report a problem · JanDrishti'],
   [/^\/my.*$/, 'My complaints · JanDrishti'],
   [/^\/complaints\/(.+)$/, '$1 · JanDrishti'],
-  [/^\/desk.*$/, 'Officer desk · JanDrishti'],
-  [/^\/officers\/?$/, 'Officer scores · JanDrishti'],
+  [/^\/desk.*$/, 'My work · JanDrishti'],
+  [/^\/officers\/?$/, 'Officer performance · JanDrishti'],
   [/^\/officers\/.*$/, 'Officer profile · JanDrishti'],
-  [/^\/map.*$/, 'Public map · JanDrishti'],
+  [/^\/map.*$/, 'Complaint map · JanDrishti'],
 ];
 
 function Guard({ role, children }: { role: 'citizen' | 'officer'; children: React.ReactElement }) {
