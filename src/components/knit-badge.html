@@ -1,0 +1,40 @@
+<!-- Built with Knit: a small badge that grows into a card on hover or keyboard focus.
+     Paste as-is into the app footer. No JavaScript, no external files. Follows prefers-color-scheme,
+     and a data-theme="light|dark" attribute on <html> when the app has its own theme toggle.
+     Credit on the right side of the footer? Add data-align="right" so the card grows leftwards. -->
+<a class="bwk" data-align="right" href="https://jagdish3135.github.io/knit/" target="_blank" rel="noopener" aria-label="Built with Knit: a team's discipline, one session's cost">
+  <span class="bwk-pill" aria-hidden="true">
+    <span class="bwk-pill-a">built with</span>
+    <span class="bwk-pill-b"><svg width="13" height="13" viewBox="0 0 32 32"><path d="M5 16c0-6 5-10 11-10s11 4 11 10" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/><path d="M27 16c0 6-5 10-11 10S5 22 5 16" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="4 5"/><circle cx="16" cy="16" r="3.5" fill="currentColor"/></svg>Knit</span>
+  </span>
+  <span class="bwk-card" aria-hidden="true">
+    <span class="bwk-mark"><svg width="24" height="24" viewBox="0 0 32 32"><path class="bwk-m1" d="M5 16c0-6 5-10 11-10s11 4 11 10" fill="none" stroke-width="3" stroke-linecap="round"/><path class="bwk-m2" d="M27 16c0 6-5 10-11 10S5 22 5 16" fill="none" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 5"/><circle class="bwk-m3" cx="16" cy="16" r="3.5"/></svg></span>
+    <span class="bwk-text"><span class="bwk-title">Built with Knit</span><span class="bwk-sub">A team's discipline, one session's cost</span></span>
+    <svg class="bwk-arrow" width="16" height="16" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </span>
+</a>
+<style>
+.bwk{--bwk-ink:#16181D;--bwk-paper:#FFFFFF;--bwk-line:#DCD7CB;--bwk-muted:#525965;--bwk-gold:#F2C230;--bwk-gold-ink:#8F6A00;--bwk-pill-a:#16181D;--bwk-pill-a-ink:#E9EDF3;--bwk-tile:#16181D;--bwk-tile-a:#F2C230;--bwk-tile-b:#E9EDF3;
+  position:relative;display:inline-block;vertical-align:middle;text-decoration:none;font:600 12px/1 Verdana,"DejaVu Sans",system-ui,sans-serif;border-radius:8px;-webkit-tap-highlight-color:transparent}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bwk{--bwk-ink:#E9EDF3;--bwk-paper:#151A22;--bwk-line:#2A3340;--bwk-muted:#A3AEBD;--bwk-gold-ink:#F2C230;--bwk-pill-a:#2A3340;--bwk-tile:#F2C230;--bwk-tile-a:#16181D;--bwk-tile-b:#16181D}}
+:root[data-theme="dark"] .bwk{--bwk-ink:#E9EDF3;--bwk-paper:#151A22;--bwk-line:#2A3340;--bwk-muted:#A3AEBD;--bwk-gold-ink:#F2C230;--bwk-pill-a:#2A3340;--bwk-tile:#F2C230;--bwk-tile-a:#16181D;--bwk-tile-b:#16181D}
+.bwk-pill{display:inline-flex;border-radius:6px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.14);transition:opacity .18s ease}
+.bwk-pill-a{background:var(--bwk-pill-a);color:var(--bwk-pill-a-ink);padding:6px 8px}
+.bwk-pill-b{background:var(--bwk-gold);color:#16181D;padding:6px 9px;display:inline-flex;align-items:center;gap:5px;font-weight:700}
+.bwk-card{position:absolute;left:0;bottom:0;display:flex;align-items:center;gap:12px;width:330px;box-sizing:border-box;padding:12px 14px;border-radius:14px;
+  background:var(--bwk-paper);border:1px solid var(--bwk-line);box-shadow:0 12px 30px -12px rgba(0,0,0,.35);color:var(--bwk-ink);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;transform-origin:left bottom;transform:scale(.42);opacity:0;pointer-events:none;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .18s ease;z-index:20}
+.bwk[data-align="right"] .bwk-card{left:auto;right:0;transform-origin:right bottom}
+.bwk-mark{width:40px;height:40px;border-radius:11px;background:var(--bwk-tile);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.bwk-m1{stroke:var(--bwk-tile-a)}.bwk-m2{stroke:var(--bwk-tile-b)}.bwk-m3{fill:var(--bwk-tile-a)}
+.bwk-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.bwk-title{font-weight:700;font-size:15px;line-height:1.2}
+.bwk-sub{font-weight:400;font-size:12px;line-height:1.3;color:var(--bwk-muted)}
+.bwk-arrow{color:var(--bwk-gold-ink);flex:none;transition:transform .2s ease}
+.bwk:hover .bwk-card,.bwk:focus-visible .bwk-card{transform:scale(1);opacity:1;pointer-events:auto}
+.bwk:hover .bwk-pill,.bwk:focus-visible .bwk-pill{opacity:0}
+.bwk:hover .bwk-arrow{transform:translateX(3px)}
+.bwk:focus-visible{outline:3px solid var(--bwk-gold);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.bwk-card,.bwk-pill,.bwk-arrow{transition:opacity .01s}.bwk-card{transform:none}}
+</style>

@@ -1,0 +1,4 @@
+{"ts":"2026-10-21T16:44:57+05:30","type":"phase","agent":"manager","phase":"intake","msg":"JanDrishti intake: map + duplicate merging extras, browser demo data, Vercel, solo"}
+{"ts":"2026-10-21T16:44:57+05:30","type":"decision","agent":"user","phase":"intake","msg":"Name JanDrishti; UI with frontend-design skill"}
+{"ts":"2026-10-21T16:44:57+05:30","type":"phase","agent":"manager","phase":"plan","msg":"Plan written: 9 stories, 10 tasks"}
+{"ts":"2026-10-21T16:47:12+05:30","type":"gate","agent":"user","phase":"plan","result":"approved","msg":"User approved the plan"}
