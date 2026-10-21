@@ -45,12 +45,15 @@ export function SlaPlate({ c, now }: { c: Complaint; now: number }) {
   const u = urgency(c, now);
   if (u === 'done') {
     const took = (c.resolvedAt ?? now) - c.createdAt;
-    const onTime = c.events.some((e) => e.kind === 'resolved' && e.onTime);
+    const esc = escalationCount(c);
+    const onTime = esc === 0 && c.events.some((e) => e.kind === 'resolved' && e.onTime);
     return (
       <div className="sla done" role="status">
         <span className="sla-label">{c.status === 'closed' ? 'Closed' : 'Resolved, awaiting confirmation'}</span>
         <span className="sla-time">{shortSpan(took)}</span>
-        <span className="sla-sub">Time to fix · {onTime ? 'before the deadline' : 'after a missed deadline'}</span>
+        <span className="sla-sub">
+          Time to fix · {onTime ? 'before the deadline' : esc ? `after ${esc} missed deadline${esc > 1 ? 's' : ''}` : 'after the deadline'}
+        </span>
       </div>
     );
   }

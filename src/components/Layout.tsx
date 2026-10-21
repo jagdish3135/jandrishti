@@ -49,7 +49,9 @@ function Header() {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   const navigate = useNavigate();
-  useEffect(() => setOpen(false), [loc.pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [loc.pathname]);
   const ofc = session?.role === 'officer' ? officer(session.officerId) : undefined;
   const name = me?.name ?? ofc?.name;
 
@@ -74,6 +76,18 @@ function Header() {
           )}
           <NavLink to="/officers">Officers</NavLink>
           <NavLink to="/map">Map</NavLink>
+          {name && (
+            <button
+              className="nav-signout"
+              type="button"
+              onClick={() => {
+                signOut();
+                navigate('/');
+              }}
+            >
+              Sign out
+            </button>
+          )}
         </nav>
         <div className="header-tools">
           <ThemeToggle />
@@ -196,10 +210,12 @@ function Footer() {
 
 export default function Layout({ children }: { children: ReactNode }) {
   const loc = useLocation();
-  useEffect(() => window.scrollTo(0, 0), [loc.pathname]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [loc.pathname]);
   return (
     <>
-      <a className="sr-only" href="#main">
+      <a className="sr-only skip" href="#main">
         Skip to content
       </a>
       <Header />

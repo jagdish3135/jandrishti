@@ -107,6 +107,8 @@ export interface Complaint {
   supporters: string[];
   events: CEvent[];
   proof?: Proof;
+  /** Fingerprints of proof photos from before the complaint was reopened. */
+  pastProofHashes?: string[];
   resolvedAt?: number;
   resolvedBy?: string;
   rating?: { stars: number; at: number; note?: string };

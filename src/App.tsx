@@ -1,17 +1,28 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import Layout from './components/Layout';
 import { useStore } from './lib/store';
-import ComplaintDetail from './pages/ComplaintDetail';
-import FileComplaint from './pages/FileComplaint';
 import Landing from './pages/Landing';
-import Login from './pages/Login';
-import MyComplaints from './pages/MyComplaints';
 import NotFound from './pages/NotFound';
-import OfficerDesk from './pages/OfficerDesk';
-import OfficerProfile from './pages/OfficerProfile';
-import Officers from './pages/Officers';
-import PublicMap from './pages/PublicMap';
+
+// Pages load on demand, so the home page doesn't download the map or photo libraries.
+const ComplaintDetail = lazy(() => import('./pages/ComplaintDetail'));
+const FileComplaint = lazy(() => import('./pages/FileComplaint'));
+const Login = lazy(() => import('./pages/Login'));
+const MyComplaints = lazy(() => import('./pages/MyComplaints'));
+const OfficerDesk = lazy(() => import('./pages/OfficerDesk'));
+const OfficerProfile = lazy(() => import('./pages/OfficerProfile'));
+const Officers = lazy(() => import('./pages/Officers'));
+const PublicMap = lazy(() => import('./pages/PublicMap'));
+
+function Loading() {
+  return (
+    <div className="wrap page-head" role="status">
+      <span className="kicker">Loading…</span>
+      <div className="hazard-tape" style={{ height: 8, width: 160, marginTop: 14, borderRadius: 4 }} />
+    </div>
+  );
+}
 
 const TITLES: [RegExp, string][] = [
   [/^\/$/, 'JanDrishti · Every complaint gets a deadline'],
@@ -41,6 +52,7 @@ export default function App() {
 
   return (
     <Layout>
+      <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -53,6 +65,7 @@ export default function App() {
         <Route path="/map" element={<PublicMap />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </Layout>
   );
 }

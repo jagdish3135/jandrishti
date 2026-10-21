@@ -3,7 +3,7 @@ import { assignee, category, officer } from './catalog';
 import { hashPhoto } from './photos';
 import { allPass } from './proof';
 import { seedDB } from './seed';
-import { applyEscalations, DAY, escalationDays, type Escalation } from './sla';
+import { applyEscalations, DAY, escalationDays, isOpen, type Escalation } from './sla';
 import type { Check, Citizen, Complaint, DB, PhotoSource, Session } from './types';
 
 const KEY = 'jd:v1';
@@ -94,12 +94,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const announce = useCallback(
     (list: Escalation[]) => {
-      const shown = list.slice(-3);
+      // One notice per complaint (where it ended up), the signed-in citizen's own first.
+      const last = new Map<string, Escalation>();
+      for (const e of list) last.set(e.complaintId, e);
+      const s = dbRef.current.session;
+      const mine = (id: string) => s?.role === 'citizen' && dbRef.current.complaints.some((c) => c.id === id && c.citizenId === s.citizenId);
+      const ordered = [...last.values()].sort((a, b) => Number(mine(b.complaintId)) - Number(mine(a.complaintId)));
+      const shown = ordered.slice(0, 2);
       for (const e of shown) {
         const to = officer(e.to);
         notify({ tone: 'warn', text: `${e.complaintId} missed its deadline and moved up to ${to?.name} (${to?.designation}).`, link: `/complaints/${e.complaintId}` });
       }
-      if (list.length > shown.length) notify({ tone: 'warn', text: `${list.length - shown.length} more escalations happened.` });
+      if (ordered.length > shown.length)
+        notify({ tone: 'warn', text: `${ordered.length - shown.length} more complaints were escalated (${list.length} steps in all).`, link: '/map' });
     },
     [notify],
   );
@@ -249,10 +256,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       },
       startWork: (id) =>
-        patch(id, (c, t) => ({ ...c, status: 'in_progress', events: [...c.events, { at: t, kind: 'started', officerId: c.officerId }] })),
+        patch(id, (c, t) =>
+          !isOpen(c) || c.status === 'in_progress'
+            ? c
+            : { ...c, status: 'in_progress', events: [...c.events, { at: t, kind: 'started', officerId: c.officerId }] },
+        ),
       submitProof: (id, p) => {
         const ok = allPass(p.checks);
         patch(id, (c, t) => {
+          if (!isOpen(c)) return c;
           if (!ok) {
             const failed = p.checks.filter((x) => !x.pass).map((x) => x.detail).join(' ');
             return { ...c, events: [...c.events, { at: t, kind: 'proof_rejected', officerId: c.officerId, note: failed }] };
@@ -268,13 +280,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         });
         return ok;
       },
-      confirm: (id) => patch(id, (c, t) => ({ ...c, status: 'closed', events: [...c.events, { at: t, kind: 'confirmed' }] })),
+      confirm: (id) =>
+        patch(id, (c, t) => (c.status !== 'resolved' ? c : { ...c, status: 'closed', events: [...c.events, { at: t, kind: 'confirmed' }] })),
       reopen: (id, note) =>
         patch(id, (c, t) => {
+          if (c.status !== 'resolved') return c;
           const owner = c.resolvedBy ?? c.officerId;
           return {
             ...c,
             status: 'reopened',
+            proof: undefined,
+            pastProofHashes: [...(c.pastProofHashes ?? []), ...(c.proof?.hash ? [c.proof.hash] : [])],
             officerId: owner,
             deadline: t + escalationDays(c.categoryId) * DAY,
             resolvedAt: undefined,
@@ -283,7 +299,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       rate: (id, stars, note) =>
         patch(id, (c, t) =>
-          c.rating
+          c.rating || c.status !== 'closed'
             ? c
             : { ...c, rating: { stars, at: t, note: note?.trim() || undefined }, events: [...c.events, { at: t, kind: 'rated', note: `${stars} of 5` }] },
         ),

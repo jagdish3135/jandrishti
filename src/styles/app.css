@@ -18,14 +18,14 @@
   --card: #fbfaf6;
   --ink: #17191c;
   --ink-2: #4a4f57;
-  --ink-3: #6b7078;
+  --ink-3: #5c6169;
   --line: #d3ccbc;
   --line-strong: #17191c;
   --accent-ink: #7a5800;
   --ok: #17703f;
-  --warn: #9a5700;
+  --warn: #8a4d00;
   --bad: #c0231a;
-  --esc: #b8420c;
+  --esc: #a33a0a;
   --shadow: 4px 4px 0 var(--line-strong);
   --grain-opacity: 0.35;
 
@@ -392,6 +392,36 @@ h3 {
   }
   .who-name {
     display: none;
+  }
+}
+
+.nav-signout {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .nav-signout {
+    display: block;
+    margin-top: 8px;
+    padding: 14px 4px;
+    border: 0;
+    border-top: 1.5px solid var(--line);
+    background: none;
+    color: var(--bad);
+    font: 700 22px/1 var(--display);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 520px) {
+  .who .btn {
+    display: none;
+  }
+  .who {
+    padding: 4px;
   }
 }
 
@@ -1909,6 +1939,10 @@ dialog.modal::backdrop {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.map-page .map {
+  height: 60vh;
+}
+
 @media (min-width: 1000px) {
   .map-page {
     grid-template-columns: minmax(0, 1fr) 380px;
@@ -1916,10 +1950,6 @@ dialog.modal::backdrop {
   .map-page .map {
     height: 680px;
   }
-}
-
-.map-page .map {
-  height: 60vh;
 }
 
 :root[data-theme='dark'] .leaflet-tile {
@@ -2078,4 +2108,26 @@ table.data th.num {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Complaint page on phones: deadline and owner first. */
+@media (max-width: 899px) {
+  .detail > aside {
+    order: -1;
+  }
+}
+
+.skip:focus {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 2000;
+  width: auto;
+  height: auto;
+  clip: auto;
+  padding: 10px 14px;
+  background: var(--hazard);
+  color: var(--on-hazard);
+  font-weight: 700;
+  border-radius: var(--r);
 }

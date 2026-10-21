@@ -46,8 +46,8 @@ export function sceneSvg(kind: SceneKind, seed: string, fixed: boolean, salt = '
   const cam = mulberry32(hashString(seed + (fixed ? ':after' : ':before') + salt));
   const W = 640;
   const H = 480;
-  const horizon = between(r, 150, 290) + (fixed ? between(cam, -18, 18) : 0);
-  const vx = between(r, 170, 470) + (fixed ? between(cam, -40, 40) : 0);
+  const horizon = between(r, 150, 290) + (fixed ? between(cam, 18, 34) * (cam() > 0.5 ? 1 : -1) : 0);
+  const vx = between(r, 170, 470) + (fixed ? between(cam, 50, 90) * (cam() > 0.5 ? 1 : -1) : 0);
   const [skyTop, skyBottom] = pick(r, SKIES);
   const parts: string[] = [];
 

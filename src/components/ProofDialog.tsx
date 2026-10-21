@@ -30,10 +30,10 @@ export default function ProofDialog({ c, onClose }: { c: Complaint; onClose: () 
   const [logged, setLogged] = useState(false);
   const hashRef = useRef('');
 
+  // Removing the element on unmount ends the modal, so there is no close() in a cleanup
+  // (StrictMode re-runs effects, and close() would fire onClose and unmount the dialog).
   useEffect(() => {
-    const d = dlg.current;
-    d?.showModal();
-    return () => d?.close();
+    if (dlg.current && !dlg.current.open) dlg.current.showModal();
   }, []);
 
   // Start the camera; stop it when the dialog closes or a photo is taken.

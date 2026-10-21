@@ -221,3 +221,17 @@ describe('seed data', () => {
     expect(WARDS.length).toBe(6);
   });
 });
+
+describe('reopened complaints', () => {
+  it('treats the proof from before the reopen as a known photo', async () => {
+    const { knownPhotos } = await import('./proof');
+    const c = complaint({ pastProofHashes: ['abcdefabcdefabcd'] });
+    const checks = runChecks(
+      { hash: 'abcdefabcdefabcd', source: 'camera', takenAt: T0 + DAY, lat: c.lat, lng: c.lng },
+      c,
+      knownPhotos([c], c),
+      T0 + DAY,
+    );
+    expect(checks.find((x) => x.id === 'reuse')).toMatchObject({ pass: false });
+  });
+});

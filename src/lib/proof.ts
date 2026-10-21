@@ -19,8 +19,9 @@ export function knownPhotos(all: Complaint[], target: Complaint): KnownPhoto[] {
   for (const c of all) {
     if (c.proof && c.id !== target.id) out.push({ hash: c.proof.hash, label: `proof photo of ${c.id}` });
   }
+  for (const h of target.pastProofHashes ?? []) out.push({ hash: h, label: 'the earlier proof photo of this complaint, before it was reopened' });
   if (target.photoHash)
-    out.push({ hash: target.photoHash, label: "the citizen's own photo of this complaint", threshold: 4 });
+    out.push({ hash: target.photoHash, label: "the citizen's own photo of this complaint", threshold: 2 });
   return out;
 }
 
@@ -30,7 +31,12 @@ export function runChecks(cap: Capture, c: Complaint, known: KnownPhoto[], now: 
     {
       id: 'live',
       pass: live,
-      detail: live ? 'Taken with the in-app camera.' : 'Picked from the gallery. Proof must be taken live in the app.',
+      detail:
+        cap.source === 'demo-camera'
+          ? 'Simulated in-app camera capture (demo).'
+          : live
+            ? 'Taken with the in-app camera.'
+            : 'Picked from the gallery. Proof must be taken live in the app.',
     },
   ];
 

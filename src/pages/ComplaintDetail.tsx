@@ -181,26 +181,30 @@ export default function ComplaintDetail() {
         </p>
       </div>
 
-      <div className="grid-2">
+      {isOwner && (c.status === 'resolved' || (c.status === 'closed' && !c.rating)) && (
+        <div style={{ marginBottom: 'var(--gap)' }}>
+          <CitizenActions c={c} />
+        </div>
+      )}
+
+      {isOfficer && isOpen(c) && (
+        <div className="panel strong row" style={{ marginBottom: 'var(--gap)', justifyContent: 'space-between' }}>
+          <span className="kicker">Assigned to you</span>
+          <div className="row">
+            {c.status !== 'in_progress' && (
+              <button className="btn" type="button" onClick={() => startWork(c.id)}>
+                Start work
+              </button>
+            )}
+            <button className="btn btn-primary" type="button" onClick={() => setProofOpen(true)}>
+              Upload proof and resolve
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid-2 detail">
         <div className="stack">
-          {isOwner && <CitizenActions c={c} />}
-
-          {isOfficer && isOpen(c) && (
-            <div className="panel strong stack" style={{ gap: 12 }}>
-              <span className="kicker">Assigned to you</span>
-              <div className="row">
-                {c.status !== 'in_progress' && (
-                  <button className="btn" type="button" onClick={() => startWork(c.id)}>
-                    Start work
-                  </button>
-                )}
-                <button className="btn btn-primary" type="button" onClick={() => setProofOpen(true)}>
-                  Upload proof and resolve
-                </button>
-              </div>
-            </div>
-          )}
-
           <section className="panel">
             <div className="panel-title">
               <h2>Description</h2>
