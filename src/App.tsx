@@ -42,7 +42,7 @@ const TITLES: [RegExp, Key | null][] = [
 function Guard({ role, children }: { role: 'citizen' | 'officer'; children: React.ReactElement }) {
   const { session } = useStore();
   const loc = useLocation();
-  if (session?.role !== role) return <Navigate to={`/login?as=${role}&next=${encodeURIComponent(loc.pathname)}`} replace />;
+  if (session?.role !== role) return <Navigate to={`/login?as=${role}&next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
   return children;
 }
 
