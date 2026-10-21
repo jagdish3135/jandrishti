@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="80" viewBox="0 0 760 80" role="img" aria-label="Tokens by agent, 0k in total">
+<style>
+.bg{fill:#FFFFFF}.t{fill:#16181D;font:600 16px system-ui,sans-serif}.l{fill:#16181D;font:13px system-ui,sans-serif}.v{fill:#525965;font:12px ui-monospace,monospace}.track{fill:#EFEBE2}
+
+@media (prefers-color-scheme: dark){.bg{fill:#151A22}.t,.l{fill:#E9EDF3}.v{fill:#A3AEBD}.track{fill:#232B37}}
+</style>
+<rect class="bg" width="760" height="80" rx="14"/>
+<text class="t" x="20" y="32">Tokens by agent · jandrishti · 0k total</text>
+
+</svg>
